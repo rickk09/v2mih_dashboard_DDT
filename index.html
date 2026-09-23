@@ -1,0 +1,913 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="color-scheme" content="dark" />
+<title>DDT QRIS Intelligence V4.2 Financial Control</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#07111b;--bg2:#0b1724;--card:#0e1d2b;--card2:#102536;--line:#1d3a4e;
+  --text:#e9f5ff;--muted:#8ea9bd;--cyan:#37d7ff;--teal:#3ce6b2;--orange:#ffb454;
+  --red:#ff6b7b;--yellow:#f7dc6f;--blue:#6ca8ff;--purple:#b998ff;--shadow:0 18px 50px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:
+ radial-gradient(circle at 20% -10%,rgba(55,215,255,.13),transparent 32%),
+ radial-gradient(circle at 90% 0%,rgba(185,152,255,.10),transparent 28%),
+ linear-gradient(180deg,var(--bg),#07101a 60%,#050b12);color:var(--text);font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;min-height:100vh}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.shell{max-width:1540px;margin:auto;padding:22px}
+.topbar{position:sticky;top:0;z-index:20;backdrop-filter:blur(18px);background:rgba(7,17,27,.78);border-bottom:1px solid rgba(79,139,173,.16);margin:-22px -22px 22px;padding:14px 22px}
+.toprow{display:flex;align-items:center;justify-content:space-between;gap:16px;max-width:1540px;margin:auto}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:40px;height:40px;border-radius:13px;background:linear-gradient(145deg,#0ea5c6,#155e75);display:grid;place-items:center;font-weight:900;letter-spacing:.6px;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 0 28px rgba(55,215,255,.20)}
+.brand h1{font-size:16px;margin:0;letter-spacing:.3px} .brand small{display:block;color:var(--muted);margin-top:2px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.btn{border:1px solid var(--line);color:var(--text);background:#0b1b29;border-radius:11px;padding:9px 13px;transition:.16s ease;box-shadow:0 0 0 1px rgba(255,255,255,.02) inset}
+.btn:hover{transform:translateY(-1px);border-color:#2e6786;background:#102637}
+.btn.primary{background:linear-gradient(135deg,#0b8cae,#0c6b89);border-color:#229fc3;font-weight:750}
+.btn.good{background:linear-gradient(135deg,#0b846b,#0b6956);border-color:#2fc59f}
+.btn.ghost{background:transparent}
+.hero{display:grid;grid-template-columns:1.5fr .9fr;gap:16px;margin-bottom:16px}
+.card{background:linear-gradient(180deg,rgba(16,37,54,.88),rgba(11,27,41,.88));border:1px solid rgba(82,139,173,.22);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+.card.pad{padding:18px}
+.cardhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+.cardhead h2,.cardhead h3{margin:0;font-size:15px} .sub{color:var(--muted);font-size:12px;margin-top:4px}
+.drop{min-height:175px;border:1.5px dashed #2a607c;border-radius:16px;background:linear-gradient(180deg,rgba(23,58,77,.32),rgba(8,21,32,.2));display:grid;place-items:center;text-align:center;padding:20px;transition:.18s}
+.drop.drag{border-color:var(--cyan);background:rgba(55,215,255,.08);box-shadow:0 0 0 4px rgba(55,215,255,.05) inset}
+.dropicon{font-size:30px;filter:drop-shadow(0 0 18px rgba(55,215,255,.25))}
+.drop strong{display:block;font-size:15px;margin:7px 0 3px} .drop span{color:var(--muted);font-size:12px}
+.filechips{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+.chip{display:inline-flex;gap:6px;align-items:center;background:#0b1a27;border:1px solid #1c3b4e;color:#a9c6d9;border-radius:999px;padding:5px 9px;font-size:11px}
+.chip b{color:#d8efff}
+.statuspanel{display:flex;flex-direction:column;justify-content:space-between;min-height:100%}
+.statusbig{font-size:28px;font-weight:850;letter-spacing:-.8px;margin:8px 0 4px}
+.statusbig.pending{color:var(--yellow)} .statusbig.verified{color:var(--teal)} .statusbig.low{color:var(--orange)}
+.gate{padding:12px 14px;border-radius:13px;background:#0a1824;border:1px solid #1b3b4e;color:#a9c3d5;font-size:12px}
+.gate b{color:#eaf7ff}
+.progress{height:7px;background:#07131d;border-radius:99px;overflow:hidden;border:1px solid #153246;margin-top:9px} .progress>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--orange),var(--teal));transition:.25s}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin:16px 0}
+.kpi{padding:14px;background:linear-gradient(180deg,#0e2130,#0b1926);border:1px solid rgba(83,143,175,.19);border-radius:15px;min-width:0}
+.kpi label{display:block;color:var(--muted);font-size:10px;letter-spacing:.85px;text-transform:uppercase;margin-bottom:6px}
+.kpi strong{font-size:18px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi small{color:#7899ae;font-size:10px}
+.toolbar{display:grid;grid-template-columns:1.1fr 1fr 1fr 1fr auto;gap:10px;align-items:end;margin-bottom:16px}
+.field label{display:block;color:#87a5b9;font-size:10px;text-transform:uppercase;letter-spacing:.65px;margin:0 0 5px 2px}
+.input,select{width:100%;height:38px;border-radius:10px;border:1px solid #21465d;background:#081722;color:#e8f4fb;padding:0 10px;outline:none}
+.input:focus,select:focus{border-color:#2db8dc;box-shadow:0 0 0 3px rgba(55,215,255,.07)}
+.toggle{display:flex;align-items:center;gap:8px;height:38px;padding:0 10px;border:1px solid #21465d;border-radius:10px;background:#081722;color:#a9c4d6;white-space:nowrap}
+.toggle input{accent-color:#22a8c9}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.grid3{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;margin-bottom:16px}
+.cutoffbox{display:grid;grid-template-columns:180px 1fr;gap:16px;align-items:center}
+.timebig{border:1px solid #24546c;border-radius:16px;padding:16px;background:radial-gradient(circle at 50% 0%,rgba(55,215,255,.08),transparent 65%),#081823;text-align:center}
+.timebig .time{font-size:36px;font-weight:900;letter-spacing:-1px;color:#eafaff}
+.timebig small{color:var(--muted)}
+.quick{display:flex;gap:7px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+.quick button{font-size:10px;padding:5px 8px}
+.insight{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mini{background:#081722;border:1px solid #193a4d;border-radius:12px;padding:10px}
+.mini label{color:#7899ae;font-size:10px;text-transform:uppercase;letter-spacing:.6px} .mini strong{display:block;margin-top:4px;font-size:14px}
+.canvaswrap{height:230px;position:relative} canvas{width:100%;height:100%}
+.tablewrap{overflow:auto;border:1px solid #17384c;border-radius:12px;max-height:420px}
+table{border-collapse:collapse;width:100%;min-width:720px;background:#081620}
+th{position:sticky;top:0;background:#0f2636;color:#9ab8ca;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.65px;padding:10px 11px;border-bottom:1px solid #1e465c;z-index:2}
+td{padding:9px 11px;border-bottom:1px solid rgba(48,89,113,.25);color:#d7e9f4;font-size:12px;white-space:nowrap} tr:hover td{background:rgba(55,215,255,.025)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.badge{display:inline-flex;align-items:center;border:1px solid #2b5166;border-radius:999px;padding:3px 7px;font-size:10px;color:#9fc2d5;background:#0a1b28}
+.badge.good{color:#8df3d1;border-color:#1b6d5a;background:#09271f} .badge.warn{color:#ffd690;border-color:#72522a;background:#2a1d0d} .badge.red{color:#ff9fac;border-color:#6c2c37;background:#2b1015}
+.note{font-size:11px;color:#7e9db1;margin-top:10px}
+.settlementForm{display:grid;grid-template-columns:1fr 1.2fr .8fr auto;gap:8px;align-items:end;margin-bottom:12px}
+.rankbest{padding:14px;border:1px solid #1e5e63;border-radius:14px;background:linear-gradient(130deg,rgba(32,183,146,.09),rgba(55,215,255,.04));margin-bottom:12px}
+.rankbest .big{font-size:27px;font-weight:900;color:#a8f5df}
+.rankbest .meta{display:flex;gap:12px;flex-wrap:wrap;color:#91b2c5;font-size:11px;margin-top:4px}
+.empty{padding:36px 18px;text-align:center;color:#7796aa}
+.callout{border-left:3px solid var(--cyan);background:#091b28;border-radius:8px;padding:10px 12px;color:#a9c5d6;font-size:12px}
+.footer{color:#5f8095;text-align:center;font-size:10px;padding:18px 0 6px}
+.toast{position:fixed;right:20px;bottom:20px;z-index:99;background:#0e2534;border:1px solid #2b6078;color:#e7f7ff;border-radius:12px;padding:11px 14px;box-shadow:var(--shadow);opacity:0;transform:translateY(8px);pointer-events:none;transition:.2s;max-width:440px} .toast.show{opacity:1;transform:none}
+.hidden{display:none!important}
+@media(max-width:1100px){.hero,.grid2,.grid3{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(3,1fr)}.toolbar{grid-template-columns:1fr 1fr}.settlementForm{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.shell{padding:12px}.topbar{margin:-12px -12px 14px;padding:10px 12px}.brand small{display:none}.brand h1{font-size:13px}.logo{width:34px;height:34px}.actions .btn:not(.primary){display:none}.kpis{grid-template-columns:repeat(2,1fr)}.toolbar,.settlementForm,.cutoffbox{grid-template-columns:1fr}.insight{grid-template-columns:1fr}.statusbig{font-size:23px}}
+
+/* === V2 Reconciliation === */
+.reconShell{margin-bottom:16px;border-color:rgba(55,215,255,.30);box-shadow:0 22px 65px rgba(0,0,0,.32),0 0 0 1px rgba(55,215,255,.025) inset}
+.reconTop{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px}
+.reconTitle{display:flex;align-items:center;gap:11px}.reconMark{width:37px;height:37px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(145deg,#0d7f9d,#134d72);font-weight:900;box-shadow:0 0 24px rgba(55,215,255,.14)}
+.reconTitle h2{margin:0;font-size:16px}.reconTitle .sub{max-width:780px}
+.reconActions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.reconImports{display:grid;grid-template-columns:1fr 64px 1fr;gap:12px;align-items:stretch}.reconArrow{display:grid;place-items:center;color:#6e9bb5;font-size:24px;font-weight:900}
+.reconDrop{border:1px dashed #2b607c;border-radius:15px;background:linear-gradient(180deg,rgba(18,50,69,.44),rgba(7,20,31,.30));padding:14px;min-height:142px;transition:.18s;position:relative;overflow:hidden}
+.reconDrop:after{content:'';position:absolute;inset:auto -35px -50px auto;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(55,215,255,.08),transparent 67%);pointer-events:none}
+.reconDrop.drag{border-color:var(--cyan);box-shadow:0 0 0 4px rgba(55,215,255,.05) inset}.reconDropHead{display:flex;align-items:center;justify-content:space-between;gap:10px}.reconDropHead strong{font-size:14px}.sourceTag{font-size:9px;letter-spacing:.75px;text-transform:uppercase;border-radius:99px;border:1px solid #2c5d77;padding:3px 7px;color:#a8cadd;background:#0a1a27}
+.reconDrop p{margin:8px 0 11px;color:#7f9fb4;font-size:11px}.reconDrop .btn{position:relative;z-index:1}.reconFile{margin-top:10px;color:#a8c8d9;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reconRule{margin-top:12px;display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:8px}.rulePill{background:#081823;border:1px solid #173b4f;border-radius:11px;padding:9px 11px;color:#90adbf;font-size:11px}.rulePill b{color:#dff5ff}
+.reconKpis{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:14px}.rkpi{background:#081823;border:1px solid #17394c;border-radius:13px;padding:11px;min-width:0}.rkpi label{display:block;color:#7899ad;font-size:9px;text-transform:uppercase;letter-spacing:.68px;margin-bottom:5px}.rkpi strong{font-size:17px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rkpi small{font-size:9px;color:#6e8ea2}.rkpi.good strong{color:#8df3d1}.rkpi.bad strong{color:#ff9fac}.rkpi.warn strong{color:#ffd690}
+.reconTabs{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0 10px}.reconTab{border:1px solid #1e465c;background:#0a1926;color:#8fb0c4;padding:7px 10px;border-radius:10px;font-size:11px}.reconTab.active{color:#e9fbff;border-color:#2485a4;background:#0d2b3b;box-shadow:0 0 0 2px rgba(55,215,255,.04) inset}
+.reconToolbar{display:grid;grid-template-columns:1fr 190px auto;gap:8px;align-items:end;margin-bottom:10px}.reconSummary{font-size:11px;color:#7e9eb2;margin:6px 0 10px}.deltaFast{color:#8df3d1}.deltaSlow{color:#ffd690}
+.reconTable table{min-width:1400px}.reconTable td{max-width:320px;overflow:hidden;text-overflow:ellipsis}.sideBadge{display:inline-flex;align-items:center;justify-content:center;min-width:26px;border-radius:7px;padding:3px 6px;font-size:9px;font-weight:800}.sideA{background:#13273a;color:#8bd7ff;border:1px solid #245a75}.sideB{background:#251d38;color:#c9a9ff;border:1px solid #59457b}.onlyA{background:#2b1015;color:#ff9fac;border:1px solid #6c2c37}.onlyB{background:#2a1d0d;color:#ffd690;border:1px solid #72522a}.matched{background:#09271f;color:#8df3d1;border:1px solid #1b6d5a}
+.reconEmpty{padding:34px;text-align:center;color:#7594a7}.reconHint{border-left:3px solid var(--teal);background:#081c20;border-radius:8px;padding:9px 11px;color:#9ec4bf;font-size:11px;margin-top:10px}
+@media(max-width:1200px){.reconKpis{grid-template-columns:repeat(4,1fr)}.reconImports{grid-template-columns:1fr}.reconArrow{transform:rotate(90deg);height:30px}.reconRule{grid-template-columns:1fr}}
+@media(max-width:700px){.reconTop{flex-direction:column}.reconActions{justify-content:flex-start}.reconKpis{grid-template-columns:repeat(2,1fr)}.reconToolbar{grid-template-columns:1fr}.reconImports{grid-template-columns:1fr}}
+
+/* === V4.1 Executive Sidebar Workspace Architecture === */
+.workspaceLayout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:18px;align-items:start}
+.workspaceSidebar{position:sticky;top:92px;align-self:start}
+.workspaceContent{min-width:0}
+.workspaceNav{display:grid;grid-template-columns:1fr;gap:12px;margin:0;position:relative;z-index:5;padding-top:18px}
+.workspaceBtn{position:relative;display:grid;grid-template-columns:48px 1fr auto;align-items:center;gap:12px;text-align:left;padding:13px 15px;border:1px solid rgba(91,147,179,.22);border-radius:16px;background:linear-gradient(180deg,rgba(12,29,43,.80),rgba(8,20,31,.84));color:var(--text);box-shadow:0 10px 26px rgba(0,0,0,.16);transition:.18s ease;overflow:hidden;width:100%}
+.workspaceBtn:before{content:"";position:absolute;inset:auto 16px 0 16px;height:2px;border-radius:9px;background:transparent;transition:.18s}
+.workspaceBtn:hover{border-color:#2d6682;transform:translateY(-1px);background:linear-gradient(180deg,#102839,#0b1d2a)}
+.workspaceBtn.active{border-color:rgba(55,215,255,.55);background:linear-gradient(145deg,rgba(11,47,65,.95),rgba(9,31,45,.96));box-shadow:0 14px 34px rgba(0,0,0,.22),0 0 0 1px rgba(55,215,255,.05) inset}
+.workspaceBtn.active:before{background:linear-gradient(90deg,var(--cyan),var(--teal))}
+.workspaceIcon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#081925;border:1px solid #24526a;color:#91eaff;font-weight:900;font-size:12px;letter-spacing:.2px}
+.workspaceBtn.active .workspaceIcon{background:linear-gradient(145deg,#0f7894,#155166);border-color:#2aa7c8;color:white;box-shadow:0 0 24px rgba(55,215,255,.13)}
+.workspaceBtn b{display:block;font-size:13px}.workspaceBtn small{display:block;color:#7899ae;font-size:11px;margin-top:2px}.workspaceBtn em{font-style:normal;font-size:10px;color:#56788d;border:1px solid #1e4256;border-radius:999px;padding:3px 7px}
+.workspaceBtn.active em{color:#9deeff;border-color:#2c718e;background:#092434}
+.appPanel{display:none;animation:workspaceIn .18s ease}.appPanel.active{display:block}@keyframes workspaceIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.workspaceHero{display:flex;align-items:flex-start;justify-content:space-between;gap:22px;padding:18px 20px;margin-bottom:16px;border:1px solid rgba(73,135,168,.20);border-radius:17px;background:linear-gradient(120deg,rgba(14,40,56,.72),rgba(9,23,35,.72));box-shadow:0 12px 34px rgba(0,0,0,.17)}
+.workspaceHero h2{font-size:20px;letter-spacing:-.35px;margin:2px 0 5px}.workspaceHero p{max-width:860px;color:#8caabd;font-size:12px;margin:0;line-height:1.6}.eyebrow{display:block;color:#4edcff;font-size:9px;font-weight:900;letter-spacing:1.5px;margin-bottom:2px}.workspaceMeta{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:7px;max-width:390px}.workspaceMeta span{display:inline-flex;align-items:center;gap:6px;background:#081822;border:1px solid #1d4052;border-radius:999px;padding:6px 9px;color:#8eabba;font-size:10px;white-space:nowrap}.dot{width:6px;height:6px;border-radius:50%;display:inline-block}.dot.teal{background:var(--teal);box-shadow:0 0 10px rgba(60,230,178,.5)}.dot.cyan{background:var(--cyan);box-shadow:0 0 10px rgba(55,215,255,.5)}.dot.amber{background:var(--orange);box-shadow:0 0 10px rgba(255,180,84,.45)}
+.topContextPill{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 12px;border:1px solid #23536b;border-radius:999px;background:#0a1d2a;color:#9ec4d8;font-size:11px}.topContextPill i{width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 12px rgba(60,230,178,.55)}
+.reconWorkspaceHero{background:linear-gradient(120deg,rgba(23,35,62,.76),rgba(8,26,39,.72))}.proReconToolbar{grid-template-columns:minmax(270px,1.6fr) minmax(140px,.65fr) minmax(120px,.55fr) auto}
+#reconPanel .reconShell{margin-bottom:0}#cutoffPanel>.hero{margin-top:0}
+@media(max-width:1180px){.workspaceLayout{grid-template-columns:1fr}.workspaceSidebar{position:static}.workspaceNav{grid-template-columns:1fr 1fr;padding-top:16px}.workspaceHero{flex-direction:column}.workspaceMeta{justify-content:flex-start;max-width:none}.proReconToolbar{grid-template-columns:1fr 1fr}.workspaceBtn{grid-template-columns:42px 1fr}.workspaceBtn em{display:none}}
+@media(max-width:640px){.workspaceNav{grid-template-columns:1fr}.workspaceBtn small{font-size:10px}.workspaceHero{padding:15px}.workspaceHero h2{font-size:17px}.proReconToolbar{grid-template-columns:1fr}}
+
+
+/* === V4 EXECUTIVE VISUAL & INTELLIGENCE LAYER === */
+:root{
+  --gold:#e8c77b;--gold2:#a98542;--ice:#c9f4ff;--ink:#050a10;
+  --glass:rgba(11,26,39,.78);--glass2:rgba(12,31,45,.92);
+}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;background-image:linear-gradient(rgba(92,156,190,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(92,156,190,.028) 1px,transparent 1px);background-size:34px 34px;mask-image:linear-gradient(to bottom,rgba(0,0,0,.65),transparent 86%)}
+body:after{content:"";position:fixed;width:520px;height:520px;right:-180px;top:120px;border-radius:50%;pointer-events:none;z-index:-1;background:radial-gradient(circle,rgba(55,215,255,.065),transparent 68%);filter:blur(8px)}
+.topbar{box-shadow:0 12px 34px rgba(0,0,0,.22);border-bottom:1px solid rgba(93,167,202,.20)}
+.toprow{display:grid;grid-template-columns:minmax(270px,1fr) auto minmax(360px,1fr);align-items:center}
+.brand .logo{position:relative;overflow:hidden;background:linear-gradient(145deg,#0f90ae,#0b4b64 68%,#153344)}
+.brand .logo:after{content:"";position:absolute;inset:-55% auto auto -30%;width:90%;height:180%;transform:rotate(25deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.24),transparent);animation:logoSweep 5s ease-in-out infinite}
+@keyframes logoSweep{0%,68%{transform:translateX(-120%) rotate(25deg)}82%,100%{transform:translateX(240%) rotate(25deg)}}
+.liveCluster{display:flex;align-items:center;gap:10px;padding:7px 10px;border:1px solid rgba(74,145,178,.28);border-radius:15px;background:linear-gradient(180deg,rgba(8,25,37,.88),rgba(6,18,28,.90));box-shadow:0 8px 24px rgba(0,0,0,.20),inset 0 1px 0 rgba(255,255,255,.025)}
+.livePulse{width:9px;height:9px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 0 rgba(60,230,178,.55);animation:livePulse 2s infinite;flex:0 0 auto}
+@keyframes livePulse{0%{box-shadow:0 0 0 0 rgba(60,230,178,.45)}70%{box-shadow:0 0 0 9px rgba(60,230,178,0)}100%{box-shadow:0 0 0 0 rgba(60,230,178,0)}}
+.clockBox{min-width:152px}.clockTime{font-variant-numeric:tabular-nums;font-size:18px;font-weight:880;letter-spacing:.55px;color:#f1fbff;line-height:1.05}.clockTime b{font-size:9px;color:var(--teal);letter-spacing:1.1px;margin-left:3px}.clockDate{display:block;color:#7f9eb1;font-size:10px;margin-top:4px;white-space:nowrap}.clockMeta{border-left:1px solid #1b4155;padding-left:10px;display:grid;gap:2px}.clockMeta span{font-size:9px;color:#65879a;letter-spacing:.6px;text-transform:uppercase}.clockMeta b{font-size:10px;color:#9bc0d2;font-variant-numeric:tabular-nums}
+.actions{align-items:center}.btn{position:relative;overflow:hidden}.btn.primary:after,.btn.good:after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 25%,rgba(255,255,255,.12),transparent 75%);transform:translateX(-120%);transition:.45s}.btn.primary:hover:after,.btn.good:hover:after{transform:translateX(120%)}
+.workspaceNav{position:relative}.workspaceNav:before{content:"EXECUTIVE WORKSPACES";position:absolute;left:2px;top:0;color:#52758b;font-size:8px;letter-spacing:1.45px;font-weight:850}.workspaceBtn.active{box-shadow:0 14px 38px rgba(0,0,0,.24),0 0 30px rgba(55,215,255,.055),inset 0 1px 0 rgba(255,255,255,.025)}
+.workspaceHero{position:relative;overflow:hidden}.workspaceHero:after{content:"";position:absolute;width:260px;height:260px;right:-95px;top:-155px;border-radius:50%;border:1px solid rgba(55,215,255,.10);box-shadow:0 0 0 38px rgba(55,215,255,.014),0 0 0 76px rgba(55,215,255,.010);pointer-events:none}
+.card{backdrop-filter:blur(8px)}
+.kpi,.rkpi{transition:.18s ease}.kpi:hover,.rkpi:hover{transform:translateY(-2px);border-color:rgba(67,168,207,.34);box-shadow:0 12px 25px rgba(0,0,0,.16)}
+.executiveIntel{border:1px solid rgba(91,157,190,.23);background:linear-gradient(130deg,rgba(12,34,49,.86),rgba(8,22,34,.90));border-radius:18px;padding:15px 16px;margin-bottom:16px;box-shadow:0 16px 42px rgba(0,0,0,.20),inset 0 1px 0 rgba(255,255,255,.025);position:relative;overflow:hidden}
+.executiveIntel:before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:linear-gradient(var(--cyan),var(--teal),transparent)}
+.intelTop{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:11px}.intelTop h3{margin:0;font-size:13px;letter-spacing:.1px}.intelTop p{margin:3px 0 0;color:#7495aa;font-size:10px}.intelBadge{border:1px solid #275168;border-radius:999px;padding:4px 8px;color:#83aabd;font-size:9px;letter-spacing:.75px;background:#081823;white-space:nowrap}
+.intelGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.intelCard{min-width:0;border:1px solid rgba(65,122,151,.24);border-radius:13px;padding:11px 12px;background:linear-gradient(180deg,rgba(8,25,37,.86),rgba(6,18,28,.80));position:relative;overflow:hidden}.intelCard:after{content:"";position:absolute;inset:auto 0 0 0;height:1px;background:linear-gradient(90deg,transparent,rgba(55,215,255,.26),transparent)}
+.intelCard label{display:block;color:#6e91a5;font-size:8.5px;font-weight:850;letter-spacing:.9px;text-transform:uppercase;margin-bottom:5px}.intelCard strong{display:block;font-size:19px;letter-spacing:-.35px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.intelCard small{display:block;color:#66879a;font-size:9.5px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.intelCard .accent{color:#c9f8ed}.intelCard .amber{color:#ffd28d}.intelCard .cyan{color:#8be9ff}.intelCard .red{color:#ff9aa7}
+.miniMeter{height:3px;background:#07131d;border-radius:99px;margin-top:8px;overflow:hidden}.miniMeter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--orange),var(--teal));border-radius:inherit;transition:.25s}
+.smartBrief{margin-top:9px;padding:9px 11px;border-radius:11px;border:1px solid rgba(63,123,153,.22);background:rgba(5,17,26,.54);display:flex;align-items:center;gap:9px;color:#91afc0;font-size:10.5px}.smartBrief b{color:#e6f5fb}.briefIcon{width:25px;height:25px;display:grid;place-items:center;border-radius:8px;background:#0c2838;border:1px solid #24546c;color:#72e7ff;font-size:10px;font-weight:900;flex:0 0 auto}
+.auditStamp{display:inline-flex;gap:6px;align-items:center;color:#5d8095;font-size:9px}.auditStamp i{width:5px;height:5px;border-radius:50%;background:var(--gold);box-shadow:0 0 9px rgba(232,199,123,.4)}
+.footer{border-top:1px solid rgba(60,117,147,.16);margin-top:17px;padding-top:15px}.kbd{display:inline-block;border:1px solid #24495d;background:#081723;border-radius:5px;padding:1px 5px;font-size:8px;color:#8ca9bb;margin:0 1px;box-shadow:0 1px 0 rgba(255,255,255,.04) inset}
+.floatingTop{position:fixed;right:18px;bottom:18px;z-index:60;width:39px;height:39px;border-radius:12px;border:1px solid #27546b;background:rgba(8,25,37,.88);backdrop-filter:blur(10px);color:#9ceaff;box-shadow:0 10px 28px rgba(0,0,0,.24);display:grid;place-items:center;opacity:0;pointer-events:none;transform:translateY(8px);transition:.18s}.floatingTop.show{opacity:1;pointer-events:auto;transform:none}.floatingTop:hover{border-color:#3cb9d9;background:#0b2b3d}
+@media(max-width:1180px){.toprow{grid-template-columns:1fr auto}.liveCluster{order:3;grid-column:1/-1;justify-self:stretch;justify-content:center}.actions{justify-self:end}.intelGrid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){.toprow{display:flex;flex-wrap:wrap}.liveCluster{width:100%;justify-content:flex-start}.clockMeta{margin-left:auto}.intelGrid{grid-template-columns:1fr 1fr}.smartBrief{align-items:flex-start}.executiveIntel{padding:12px}.floatingTop{right:12px;bottom:12px}}
+@media(max-width:430px){.intelGrid{grid-template-columns:1fr}.clockMeta{display:none}.clockBox{min-width:0}}
+
+/* === V4.2 Balance & Settlement Control === */
+.balanceHero{background:linear-gradient(120deg,rgba(18,48,43,.78),rgba(8,28,40,.74))}
+.balanceGrid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(340px,.65fr);gap:16px;margin-bottom:16px}
+.balanceFormGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.balanceField{background:#081722;border:1px solid #1c4053;border-radius:12px;padding:10px}
+.balanceField label{display:block;color:#7899ae;font-size:9px;text-transform:uppercase;letter-spacing:.7px;margin-bottom:5px}
+.balanceField .input{font-variant-numeric:tabular-nums;font-weight:700}
+.balanceField small{display:block;color:#5f8195;font-size:9px;margin-top:5px}
+.balanceStatus{display:flex;flex-direction:column;justify-content:space-between;min-height:100%;background:radial-gradient(circle at 80% 0%,rgba(60,230,178,.08),transparent 38%),linear-gradient(180deg,#0c2130,#091824)}
+.balanceState{font-size:31px;font-weight:900;letter-spacing:-.8px;margin:8px 0 4px}.balanceState.good{color:var(--teal)}.balanceState.bad{color:var(--red)}.balanceState.wait{color:var(--yellow)}
+.varianceBig{font-size:26px;font-weight:900;font-variant-numeric:tabular-nums}.varianceBig.good{color:#a9f4dc}.varianceBig.bad{color:#ff9ba8}
+.balanceKpis{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px}.balanceKpi{padding:13px;background:linear-gradient(180deg,#0e2130,#0a1926);border:1px solid rgba(83,143,175,.19);border-radius:14px}.balanceKpi label{display:block;color:#7899ae;font-size:9px;letter-spacing:.8px;text-transform:uppercase;margin-bottom:5px}.balanceKpi strong{display:block;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.balanceKpi small{color:#65879b;font-size:9px}
+.flowBridge{display:grid;grid-template-columns:repeat(7,minmax(120px,1fr));gap:8px;align-items:stretch}.flowNode{position:relative;border:1px solid #1c4154;border-radius:13px;background:#081824;padding:11px;min-height:82px}.flowNode:not(:last-child):after{content:'→';position:absolute;right:-9px;top:29px;color:#4c829d;font-weight:900;z-index:2}.flowNode label{display:block;color:#718fa2;font-size:9px;text-transform:uppercase;letter-spacing:.65px}.flowNode strong{display:block;margin-top:7px;font-size:14px}.flowNode.good{border-color:#256a5b;background:#09251e}.flowNode.warn{border-color:#66502a;background:#241b0d}.flowNode.bad{border-color:#693240;background:#271116}
+.cutoffAllocation{display:grid;grid-template-columns:1.1fr repeat(4,minmax(120px,.75fr));gap:10px;align-items:stretch}.allocationControl{border:1px solid #1d4255;border-radius:14px;background:#081824;padding:12px}.allocationMetric{border:1px solid #1b3d50;border-radius:14px;background:#091a27;padding:12px}.allocationMetric label{display:block;color:#718fa2;font-size:9px;text-transform:uppercase;letter-spacing:.65px}.allocationMetric strong{display:block;margin-top:6px;font-size:15px}.allocationMetric small{display:block;color:#607f92;font-size:9px;margin-top:4px}.formulaBox{padding:12px 14px;border-radius:12px;border:1px solid #1e465a;background:#071722;color:#94b0c0;font-size:11px;line-height:1.65}.formulaBox b{color:#e7f6fc}.formulaBox code{color:#97efd6;background:#0b2722;border:1px solid #1d5548;border-radius:6px;padding:2px 5px}
+.balanceActionsRow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+@media(max-width:1260px){.balanceGrid{grid-template-columns:1fr}.balanceKpis{grid-template-columns:repeat(3,1fr)}.flowBridge{grid-template-columns:repeat(4,1fr)}.flowNode:nth-child(4):after{display:none}.cutoffAllocation{grid-template-columns:1fr 1fr 1fr}}
+@media(max-width:760px){.balanceFormGrid{grid-template-columns:1fr 1fr}.balanceKpis{grid-template-columns:1fr 1fr}.flowBridge{grid-template-columns:1fr 1fr}.flowNode:after{display:none}.cutoffAllocation{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.balanceFormGrid,.balanceKpis,.flowBridge,.cutoffAllocation{grid-template-columns:1fr}}
+
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar"><div class="toprow">
+    <div class="brand"><div class="logo">QI</div><div><h1>DDT QRIS Intelligence</h1><small>Precision Cutoff • Reconciliation • Balance Control • V4.2</small></div></div>
+    <div class="liveCluster" title="Jam live selalu menggunakan timezone Asia/Jakarta (WIB)">
+      <span class="livePulse"></span>
+      <div class="clockBox"><div class="clockTime"><span id="liveClock">--:--:--</span> <b>WIB</b></div><small class="clockDate" id="liveDate">Memuat waktu…</small></div>
+      <div class="clockMeta"><span>Asia/Jakarta</span><b id="sessionUptime">UP 00:00:00</b><span id="liveWorkspaceLabel">Cutoff workspace</span></div>
+    </div>
+    <div class="actions" id="cutoffTopActions">
+      <button class="btn ghost" id="btnReset">Reset Cutoff</button>
+      <button class="btn" id="btnTemplate">Template Settlement</button>
+      <button class="btn primary" id="btnExport">Export Cutoff</button>
+    </div>
+    <div class="actions hidden" id="reconTopContext">
+      <span class="topContextPill"><i></i> Reconciliation Workspace</span>
+    </div>
+    <div class="actions hidden" id="balanceTopActions">
+      <button class="btn" id="btnBalancePullTop">Ambil dari Cutoff</button>
+      <button class="btn ghost" id="btnBalanceResetTop">Reset Balance</button>
+      <button class="btn primary" id="btnBalanceExportTop">Export Balance</button>
+    </div>
+  </div></div>
+
+  <div class="workspaceLayout">
+    <aside class="workspaceSidebar">
+      <nav class="workspaceNav" aria-label="Menu dashboard">
+    <button class="workspaceBtn active" data-workspace="cutoff" type="button">
+      <span class="workspaceIcon">CT</span><span><b>Cutoff Settlement</b><small>Analisis jam cutoff, batch & pencairan saldo</small></span><em>01</em>
+    </button>
+    <button class="workspaceBtn" data-workspace="recon" type="button">
+      <span class="workspaceIcon">A↔B</span><span><b>Perbandingan Data</b><small>Rekonsiliasi dua export & deteksi data hilang</small></span><em>02</em>
+    </button>
+    <button class="workspaceBtn" data-workspace="balance" type="button">
+      <span class="workspaceIcon">BL</span><span><b>Balance & Settlement</b><small>Omzet, fee, pencairan, saldo & variance</small></span><em>03</em>
+    </button>
+      </nav>
+    </aside>
+    <section class="workspaceContent">
+
+  <main class="appPanel active" id="cutoffPanel">
+    <div class="workspaceHero">
+      <div><span class="eyebrow">WORKSPACE 01</span><h2>Cutoff Settlement Intelligence</h2><p>Fokus khusus untuk menentukan cutoff saldo secara terukur. Simulasi transaksi dipisahkan dari evidence settlement agar kesimpulan tidak tercampur dengan jam operasional channel.</p></div>
+      <div class="workspaceMeta"><span><i class="dot teal"></i> Local processing</span><span><i class="dot cyan"></i> Minute-level scan</span><span><i class="dot amber"></i> Evidence-aware</span></div>
+    </div>
+    <section class="executiveIntel" id="cutoffExecutive">
+      <div class="intelTop"><div><h3>Executive Intelligence Snapshot</h3><p>Ringkasan otomatis kualitas data, kekuatan evidence, dan risiko sebelum menyimpulkan cutoff.</p></div><span class="intelBadge">AUTO DIAGNOSTIC</span></div>
+      <div class="intelGrid">
+        <div class="intelCard"><label>Data Integrity</label><strong class="accent" id="cHealthScore">—</strong><small id="cHealthMeta">Belum ada dataset</small><div class="miniMeter"><i id="cHealthBar"></i></div></div>
+        <div class="intelCard"><label>Best Cutoff Signal</label><strong class="cyan" id="cBestCutoff">—</strong><small id="cBestMeta">Simulation only</small></div>
+        <div class="intelCard"><label>Settlement Evidence</label><strong class="amber" id="cEvidence">0</strong><small id="cEvidenceMeta">Belum dikalibrasi</small></div>
+        <div class="intelCard"><label>Risk Flags</label><strong id="cRiskCount">0</strong><small id="cRiskMeta">Menunggu data</small></div>
+      </div>
+      <div class="smartBrief"><span class="briefIcon">AI</span><span id="cutoffExecutiveBrief"><b>Executive brief:</b> Upload data transaksi untuk menjalankan diagnostic.</span></div>
+    </section>
+
+  <section class="hero">
+    <div class="card pad">
+      <div class="cardhead"><div><h2>Import Data Transaksi</h2><div class="sub">Gabungkan beberapa CSV/XLSX sekaligus. Duplikat Order ID otomatis dibersihkan.</div></div><span class="badge">LOCAL ONLY</span></div>
+      <div class="drop" id="dropZone">
+        <div><div class="dropicon">⬇</div><strong>Tarik file ke sini atau klik untuk memilih</strong><span>CSV, XLSX, XLS • data tidak dikirim ke server</span></div>
+      </div>
+      <input id="fileInput" type="file" multiple accept=".csv,.xlsx,.xls" class="hidden" />
+      <div class="filechips" id="fileChips"></div>
+    </div>
+    <div class="card pad statuspanel">
+      <div>
+        <div class="cardhead"><div><h2>Status Akurasi Cutoff Saldo</h2><div class="sub">Cutoff settlement tidak ditebak dari jam transaksi saja.</div></div><span class="badge warn" id="accuracyBadge">BELUM TERVERIFIKASI</span></div>
+        <div class="statusbig pending" id="statusBig">Butuh bukti settlement</div>
+        <div class="gate" id="accuracyText"><b>Mode transaction-only.</b> Dashboard dapat mensimulasikan 23:00 vs 00:00, tetapi cutoff saldo baru dinilai terverifikasi setelah nominal settlement/pencairan dicocokkan.</div>
+      </div>
+      <div><div class="progress"><i id="accuracyBar"></i></div><div class="note" id="coverageNote">Upload data transaksi untuk mulai analisis.</div></div>
+    </div>
+  </section>
+
+  <section class="kpis">
+    <div class="kpi"><label>Transaksi</label><strong id="kTx">0</strong><small id="kTxSub">valid rows</small></div>
+    <div class="kpi"><label>Gross Amount</label><strong id="kGross">Rp0</strong><small>Amount</small></div>
+    <div class="kpi"><label>Total Fee</label><strong id="kFee">Rp0</strong><small>Fee</small></div>
+    <div class="kpi"><label>Net Settlement</label><strong id="kNet">Rp0</strong><small>Total / after fee</small></div>
+    <div class="kpi"><label>Data Range</label><strong id="kRange">—</strong><small id="kRangeSub">Paid At</small></div>
+    <div class="kpi"><label>Wallet Aktif</label><strong id="kWallet">0</strong><small>setelah filter</small></div>
+  </section>
+
+  <section class="card pad">
+    <div class="cardhead"><div><h2>Filter Analisis</h2><div class="sub">Pisahkan wallet/provider agar cutoff tidak tercampur antar channel.</div></div><span class="badge" id="filteredBadge">0 rows</span></div>
+    <div class="toolbar">
+      <div class="field"><label>Wallet / Provider</label><select id="walletFilter"><option value="__ALL__">Semua Wallet</option></select></div>
+      <div class="field"><label>Merchant mengandung</label><input class="input" id="merchantFilter" placeholder="contoh: XX-" /></div>
+      <div class="field"><label>Tanggal mulai</label><input class="input" type="date" id="dateFrom" /></div>
+      <div class="field"><label>Tanggal akhir</label><input class="input" type="date" id="dateTo" /></div>
+      <label class="toggle"><input type="checkbox" id="doneOnly" checked /> Status DONE saja</label>
+    </div>
+  </section>
+
+  <section class="grid2">
+    <div class="card pad">
+      <div class="cardhead"><div><h2>Cutoff Simulator</h2><div class="sub">Hitung batch harian berdasarkan jam cutoff yang ingin diuji.</div></div><span class="badge" id="simBadge">SIMULASI</span></div>
+      <div class="cutoffbox">
+        <div class="timebig"><div class="time" id="cutoffDisplay">23:00</div><small>WIB / waktu pada file</small><div class="quick"><button class="btn" data-time="23:00">23:00</button><button class="btn" data-time="00:00">00:00</button><button class="btn" data-time="03:00">03:00</button></div></div>
+        <div>
+          <div class="field"><label>Jam cutoff</label><input class="input" type="time" id="cutoffTime" value="23:00" step="60" /></div>
+          <div class="insight" style="margin-top:10px">
+            <div class="mini"><label>Batch terbaru</label><strong id="simLatest">—</strong></div>
+            <div class="mini"><label>Net batch</label><strong id="simNet">Rp0</strong></div>
+            <div class="mini"><label>Jumlah transaksi</label><strong id="simCount">0</strong></div>
+          </div>
+          <div class="callout" style="margin-top:10px" id="simExplain">Cutoff 23:00 berarti batch ditutup pada 23:00 setiap hari: transaksi 23:00 ke atas masuk batch tanggal berikutnya.</div>
+        </div>
+      </div>
+    </div>
+    <div class="card pad">
+      <div class="cardhead"><div><h2>23:00 vs 00:00</h2><div class="sub">Perbedaan nominal batch jika cutoff digeser satu jam.</div></div><span class="badge" id="compareBadge">NET</span></div>
+      <div class="canvaswrap"><canvas id="compareChart"></canvas></div>
+      <div class="note" id="compareNote">Belum ada data.</div>
+    </div>
+  </section>
+
+  <section class="grid3">
+    <div class="card pad">
+      <div class="cardhead"><div><h2>Settlement Calibration — Penentu Cutoff Akurat</h2><div class="sub">Masukkan nominal pencairan/settlement yang benar-benar diterima. Mesin akan mencari jam cutoff dengan error terkecil per menit.</div></div><span class="badge good">1-MIN SEARCH</span></div>
+      <div class="settlementForm">
+        <div class="field"><label>Tanggal settlement/pencairan</label><input class="input" type="date" id="obsDate" /></div>
+        <div class="field"><label>Nominal diterima</label><input class="input" id="obsAmount" inputmode="decimal" placeholder="contoh 1.045.304.128,22" /></div>
+        <div class="field"><label>Catatan</label><input class="input" id="obsNote" placeholder="opsional" /></div>
+        <button class="btn good" id="addObs">+ Tambah</button>
+      </div>
+      <div class="toolbar" style="grid-template-columns:1fr 1fr 1fr; margin-bottom:12px">
+        <div class="field"><label>Metric pencocokan</label><select id="matchMetric"><option value="total">Net / Total</option><option value="amount">Gross / Amount</option></select></div>
+        <div class="field"><label>Settlement lag</label><select id="lagMode"><option value="auto">Auto 0–2 hari</option><option value="0">Hari yang sama</option><option value="1">+1 hari</option><option value="2">+2 hari</option></select></div>
+        <div class="field"><label>Toleransi referensi</label><select id="tolerance"><option value="0.001">0,10%</option><option value="0.005" selected>0,50%</option><option value="0.01">1,00%</option><option value="0.02">2,00%</option></select></div>
+      </div>
+      <div id="bestCandidate" class="empty">Tambahkan minimal satu nominal settlement untuk menjalankan pencocokan.</div>
+      <div class="tablewrap"><table><thead><tr><th>Tanggal Settlement</th><th class="num">Nominal</th><th>Catatan</th><th></th></tr></thead><tbody id="obsBody"></tbody></table></div>
+    </div>
+    <div class="card pad">
+      <div class="cardhead"><div><h2>Ranking Kandidat Cutoff</h2><div class="sub">Semakin kecil WAPE, semakin dekat dengan settlement aktual.</div></div><span class="badge" id="candidateBadge">NO EVIDENCE</span></div>
+      <div class="tablewrap" style="max-height:505px"><table><thead><tr><th>#</th><th>Cutoff</th><th>Lag</th><th class="num">WAPE</th><th class="num">Coverage</th><th></th></tr></thead><tbody id="candidateBody"></tbody></table></div>
+    </div>
+  </section>
+
+  <section class="grid2">
+    <div class="card pad">
+      <div class="cardhead"><div><h2>Pola Aktivitas 15 Menit</h2><div class="sub">Menunjukkan jam channel aktif. Ini bukan bukti settlement cutoff.</div></div><span class="badge warn">TRAFFIC ONLY</span></div>
+      <div class="canvaswrap"><canvas id="trafficChart"></canvas></div>
+      <div class="note" id="trafficNote">Grafik agregat berdasarkan transaksi setelah filter.</div>
+    </div>
+    <div class="card pad">
+      <div class="cardhead"><div><h2>Gap Aktivitas Terpanjang</h2><div class="sub">Berguna mendeteksi jam channel berhenti, bukan otomatis jam saldo dicairkan.</div></div><span class="badge" id="gapBadge">0 GAP</span></div>
+      <div class="tablewrap"><table><thead><tr><th>Mulai</th><th>Sampai</th><th class="num">Durasi</th></tr></thead><tbody id="gapBody"></tbody></table></div>
+    </div>
+  </section>
+
+  <section class="grid2">
+    <div class="card pad">
+      <div class="cardhead"><div><h2>Batch Harian — Cutoff Terpilih</h2><div class="sub">Tanggal batch = tanggal penutupan batch pada jam cutoff.</div></div><span class="badge" id="batchBadge">23:00</span></div>
+      <div class="tablewrap"><table><thead><tr><th>Batch</th><th>Window</th><th class="num">Tx</th><th class="num">Gross</th><th class="num">Fee</th><th class="num">Net</th></tr></thead><tbody id="batchBody"></tbody></table></div>
+    </div>
+    <div class="card pad">
+      <div class="cardhead"><div><h2>Transaksi di Sekitar Cutoff</h2><div class="sub">Sampel transaksi ±15 menit dari jam cutoff untuk validasi manual.</div></div><span class="badge" id="aroundBadge">±15 MIN</span></div>
+      <div class="tablewrap"><table><thead><tr><th>Paid At</th><th>Δ</th><th>Wallet</th><th>Merchant</th><th class="num">Net</th></tr></thead><tbody id="aroundBody"></tbody></table></div>
+    </div>
+  </section>
+
+  <section class="card pad">
+    <div class="cardhead"><div><h2>Data Quality & Audit Trail</h2><div class="sub">Angka di sini membantu memastikan kesimpulan cutoff tidak berasal dari data yang terpotong atau duplikat.</div></div><span class="badge" id="qualityBadge">WAITING</span></div>
+    <div class="insight">
+      <div class="mini"><label>Imported rows</label><strong id="qImported">0</strong></div>
+      <div class="mini"><label>Duplikat dibuang</label><strong id="qDup">0</strong></div>
+      <div class="mini"><label>Datetime invalid</label><strong id="qInvalid">0</strong></div>
+    </div>
+    <div class="note" id="qualityNote">Tidak ada data.</div>
+  </section>
+
+  </main>
+
+  <main class="appPanel" id="reconPanel">
+    <div class="workspaceHero reconWorkspaceHero">
+      <div><span class="eyebrow">WORKSPACE 02</span><h2>Data Reconciliation Studio</h2><p>Fokus khusus untuk membandingkan Export A dan Export B. Hasil dipisahkan menjadi matched, hanya di A, hanya di B, serta pasangan dengan delay tidak wajar.</p></div>
+      <div class="workspaceMeta"><span><i class="dot teal"></i> Two-way audit</span><span><i class="dot cyan"></i> One-to-one pairing</span><span><i class="dot amber"></i> Full-row evidence</span></div>
+    </div>
+    <section class="executiveIntel" id="reconExecutive">
+      <div class="intelTop"><div><h3>Reconciliation Intelligence Snapshot</h3><p>Menilai coverage, kekuatan exact-ID, latency report, dan exposure nominal yang belum berpasangan.</p></div><span class="intelBadge">TWO-WAY CONTROL</span></div>
+      <div class="intelGrid">
+        <div class="intelCard"><label>Match Coverage</label><strong class="accent" id="rExecCoverage">—</strong><small id="rExecCoverageMeta">Upload Data A & B</small><div class="miniMeter"><i id="rExecCoverageBar"></i></div></div>
+        <div class="intelCard"><label>Exact-ID Strength</label><strong class="cyan" id="rExecExact">—</strong><small id="rExecExactMeta">RRN / Order ID</small></div>
+        <div class="intelCard"><label>P95 Reporting Delay</label><strong class="amber" id="rExecP95">—</strong><small id="rExecP95Meta">95% pasangan di bawah ini</small></div>
+        <div class="intelCard"><label>Unmatched Exposure</label><strong id="rExecExposure">Rp0</strong><small id="rExecExposureMeta">A + B belum berpasangan</small></div>
+      </div>
+      <div class="smartBrief"><span class="briefIcon">AB</span><span id="reconExecutiveBrief"><b>Audit brief:</b> Upload kedua export untuk memulai rekonsiliasi.</span></div>
+    </section>
+  <section class="card pad reconShell" id="reconciliation">
+    <div class="reconTop">
+      <div class="reconTitle"><div class="reconMark">A↔B</div><div><h2>Import & Reconcile Data A ↔ Data B</h2><div class="sub">Bandingkan dua export secara dua arah. Baris yang hanya ada di salah satu sumber ditampilkan lengkap untuk audit dan export.</div></div></div>
+      <div class="reconActions"><button class="btn" id="btnUseAForCutoff">Kirim Data A ke Cutoff</button><button class="btn good" id="btnExportRecon">Export Rekonsiliasi</button><button class="btn ghost" id="btnResetRecon">Reset A/B</button></div>
+    </div>
+    <div class="reconImports">
+      <div class="reconDrop" id="reconDropA"><div class="reconDropHead"><strong>DATA A — Export Provider</strong><span class="sourceTag">A</span></div><p>Contoh: <b>dynamic_transaction.csv</b>. User otomatis dibaca dari kolom Memo sebelum <code>||</code>.</p><button class="btn primary" id="pickReconA">Pilih Data A</button><div class="reconFile" id="reconFileA">Belum ada file</div></div>
+      <div class="reconArrow">⇄</div>
+      <div class="reconDrop" id="reconDropB"><div class="reconDropHead"><strong>DATA B — Export Report</strong><span class="sourceTag">B</span></div><p>Contoh: <b>reportpopup.csv</b>. User, nominal dan waktu dideteksi otomatis.</p><button class="btn primary" id="pickReconB">Pilih Data B</button><div class="reconFile" id="reconFileB">Belum ada file</div></div>
+    </div>
+    <input id="reconInputA" type="file" accept=".csv,.xlsx,.xls" class="hidden"/><input id="reconInputB" type="file" accept=".csv,.xlsx,.xls" class="hidden"/>
+    <div class="reconRule">
+      <div class="rulePill"><b>Kunci utama:</b> User + Nominal harus sama persis. Huruf besar/kecil dan spasi user dinormalisasi.</div>
+      <div class="rulePill"><b>Duplikat:</b> dipasangkan one-to-one berdasarkan waktu terdekat.</div>
+      <div class="rulePill"><b>Waktu:</b> bukan syarat keberadaan; dipakai untuk memilih pasangan & menghitung delay.</div>
+    </div>
+    <div class="reconKpis">
+      <div class="rkpi"><label>Valid Data A</label><strong id="rA">0</strong><small id="rAIgnored">0 diabaikan</small></div>
+      <div class="rkpi"><label>Valid Data B</label><strong id="rB">0</strong><small id="rBIgnored">0 diabaikan</small></div>
+      <div class="rkpi good"><label>Cocok A ↔ B</label><strong id="rMatch">0</strong><small id="rRate">0% match rate</small></div>
+      <div class="rkpi bad"><label>Hanya di A</label><strong id="rOnlyA">0</strong><small id="rOnlyASum">Rp0</small></div>
+      <div class="rkpi warn"><label>Hanya di B</label><strong id="rOnlyB">0</strong><small id="rOnlyBSum">Rp0</small></div>
+      <div class="rkpi"><label>Median Delay</label><strong id="rMedianDelay">—</strong><small>A → B</small></div>
+      <div class="rkpi"><label>Delay Maks</label><strong id="rMaxDelay">—</strong><small id="rSlowCount">0 review</small></div>
+    </div>
+    <div class="reconTabs"><button class="reconTab active" data-rview="diff">Semua Selisih <b id="tabDiff">0</b></button><button class="reconTab" data-rview="onlyA">Hanya A <b id="tabA">0</b></button><button class="reconTab" data-rview="onlyB">Hanya B <b id="tabB">0</b></button><button class="reconTab" data-rview="slow">Matched Delay &gt; 10m <b id="tabSlow">0</b></button></div>
+    <div class="reconToolbar proReconToolbar"><div class="field"><label>Cari User / Order ID / RRN / Merchant / Bank</label><input class="input" id="reconSearch" placeholder="ketik untuk filter..."/></div><div class="field"><label>Batas pairing waktu</label><select id="reconMaxDelay"><option value="21600">6 jam</option><option value="43200">12 jam</option><option value="86400" selected>24 jam</option><option value="172800">48 jam</option><option value="0">Tanpa batas</option></select></div><div class="field"><label>Maks baris tampil</label><select id="reconLimit"><option>100</option><option selected>250</option><option>500</option><option>1000</option><option value="999999">Semua</option></select></div><button class="btn" id="btnCopyRecon">Copy Data Tampil</button></div>
+    <div class="reconSummary" id="reconSummary">Upload Data A dan Data B untuk mulai rekonsiliasi.</div>
+    <div class="tablewrap reconTable"><table><thead id="reconHead"></thead><tbody id="reconBody"><tr><td class="reconEmpty">Belum ada hasil perbandingan.</td></tr></tbody></table></div>
+    <div class="reconHint" id="reconHint"><b>Mesin pencocokan berlapis:</b> exact RRN/Order ID diprioritaskan bila tersedia di kedua sumber, lalu fallback ke User + Nominal dengan pairing one-to-one berdasarkan waktu terdekat. Batas waktu pairing mencegah transaksi berulang di hari berbeda tersambung secara keliru.</div>
+  </section>
+
+  </main>
+
+  <main class="appPanel" id="balancePanel">
+    <div class="workspaceHero balanceHero">
+      <div><span class="eyebrow">WORKSPACE 03</span><h2>Balance & Settlement Control</h2><p>Rekonsiliasi omzet, fee, cutoff, pencairan dan saldo dalam satu ledger. Variance dihitung transparan agar angka tidak dipaksa cocok.</p></div>
+      <div class="workspaceMeta"><span><i class="dot teal"></i> Ledger based</span><span><i class="dot cyan"></i> Cutoff linked</span><span><i class="dot amber"></i> Variance control</span></div>
+    </div>
+
+    <section class="executiveIntel">
+      <div class="intelTop"><div><h3>Financial Control Snapshot</h3><p>Ringkasan balance otomatis berdasarkan input aktual dan dataset cutoff yang aktif.</p></div><span class="intelBadge">LIVE CALCULATION</span></div>
+      <div class="intelGrid">
+        <div class="intelCard"><label>Balance Status</label><strong class="amber" id="bExecStatus">MENUNGGU</strong><small id="bExecStatusMeta">Lengkapi input utama</small></div>
+        <div class="intelCard"><label>Variance</label><strong id="bExecVariance">Rp0</strong><small id="bExecVarianceMeta">Expected − actual closing</small></div>
+        <div class="intelCard"><label>Net Transaction</label><strong class="cyan" id="bExecNet">Rp0</strong><small>Gross − fee − refund</small></div>
+        <div class="intelCard"><label>Actual Closing</label><strong class="accent" id="bExecClosing">Rp0</strong><small>Available + unsettled</small></div>
+      </div>
+      <div class="smartBrief"><span class="briefIcon">BL</span><span id="balanceExecutiveBrief"><b>Balance brief:</b> Total omzet awal sudah disiapkan Rp5.810.135.002. Lengkapi fee, payout dan saldo akhir untuk mulai rekonsiliasi.</span></div>
+    </section>
+
+    <section class="balanceGrid">
+      <div class="card pad">
+        <div class="cardhead"><div><h2>Input Rekonsiliasi</h2><div class="sub">Semua nilai dapat diketik manual atau ditarik otomatis dari workspace Cutoff.</div></div><span class="badge">IDR</span></div>
+        <div class="balanceFormGrid">
+          <div class="balanceField"><label>Gross Omzet</label><input class="input balanceInput" id="balGross" inputmode="decimal" value="5810135002"><small>Total pemasukan bruto.</small></div>
+          <div class="balanceField"><label>Total Fee</label><input class="input balanceInput" id="balFee" inputmode="decimal" value="0"><small>MDR / admin provider.</small></div>
+          <div class="balanceField"><label>Refund / Reversal</label><input class="input balanceInput" id="balRefund" inputmode="decimal" value="0"><small>Transaksi yang dikembalikan.</small></div>
+          <div class="balanceField"><label>Saldo Awal Available</label><input class="input balanceInput" id="balOpenAvailable" inputmode="decimal" value="0"><small>Available di awal periode.</small></div>
+          <div class="balanceField"><label>Saldo Awal Unsettled</label><input class="input balanceInput" id="balOpenUnsettled" inputmode="decimal" value="0"><small>Carryover awal periode.</small></div>
+          <div class="balanceField"><label>Adjustment Credit (+)</label><input class="input balanceInput" id="balCredit" inputmode="decimal" value="0"><small>Koreksi masuk dari provider.</small></div>
+          <div class="balanceField"><label>Adjustment Debit (−)</label><input class="input balanceInput" id="balDebit" inputmode="decimal" value="0"><small>Koreksi keluar / charge.</small></div>
+          <div class="balanceField"><label>Total Pencairan</label><input class="input balanceInput" id="balPayout" inputmode="decimal" value="0"><small>Total withdraw / settlement cair.</small></div>
+          <div class="balanceField"><label>Saldo Akhir Available</label><input class="input balanceInput" id="balCloseAvailable" inputmode="decimal" value="0"><small>Available pada akhir periode.</small></div>
+          <div class="balanceField"><label>Saldo Akhir Unsettled</label><input class="input balanceInput" id="balCloseUnsettled" inputmode="decimal" value="0"><small>Saldo tertahan / carryover akhir.</small></div>
+          <div class="balanceField"><label>Toleransi Variance (Rp)</label><input class="input balanceInput" id="balTolerance" inputmode="decimal" value="1"><small>Default Rp1 untuk kontrol ketat.</small></div>
+          <div class="balanceField"><label>Catatan</label><input class="input balanceInput" id="balNote" value="Omzet kontrol"><small>Opsional untuk export audit.</small></div>
+        </div>
+        <div class="balanceActionsRow"><button class="btn primary" id="btnBalancePull">Ambil Total dari Cutoff</button><button class="btn" id="btnBalanceUseBatch">Gunakan Batch Cutoff Terpilih</button><button class="btn ghost" id="btnBalanceZero">Kosongkan Angka Manual</button></div>
+      </div>
+      <div class="card pad balanceStatus">
+        <div>
+          <div class="cardhead"><div><h2>Status Rekonsiliasi</h2><div class="sub">Balance hanya PASS bila variance berada dalam toleransi yang Anda tentukan.</div></div><span class="badge warn" id="balStatusBadge">WAITING</span></div>
+          <div class="balanceState wait" id="balStatusBig">MENUNGGU INPUT</div>
+          <div class="varianceBig" id="balVarianceBig">Rp0</div>
+          <div class="gate" id="balStatusText"><b>Formula:</b> Opening + Net Transaction + Credit − Debit − Payout = Expected Closing.</div><div class="note" id="balSuggestion" style="margin-top:9px">Saran rekonsiliasi akan muncul setelah payout atau saldo akhir diisi.</div>
+        </div>
+        <div><div class="progress"><i id="balProgress"></i></div><div class="note" id="balVarianceRatio">Variance ratio: —</div></div>
+      </div>
+    </section>
+
+    <section class="balanceKpis">
+      <div class="balanceKpi"><label>Gross Omzet</label><strong id="bkGross">Rp0</strong><small>Bruto</small></div>
+      <div class="balanceKpi"><label>Fee + Refund</label><strong id="bkDeductions">Rp0</strong><small>Total deduction</small></div>
+      <div class="balanceKpi"><label>Net Transaction</label><strong id="bkNet">Rp0</strong><small>Gross − deduction</small></div>
+      <div class="balanceKpi"><label>Opening Balance</label><strong id="bkOpening">Rp0</strong><small>Available + unsettled awal</small></div>
+      <div class="balanceKpi"><label>Expected Closing</label><strong id="bkExpected">Rp0</strong><small>Hasil ledger</small></div>
+      <div class="balanceKpi"><label>Actual Closing</label><strong id="bkActual">Rp0</strong><small>Available + unsettled akhir</small></div>
+    </section>
+
+    <section class="card pad" style="margin-bottom:16px">
+      <div class="cardhead"><div><h2>Money Flow Bridge</h2><div class="sub">Urutan perhitungan ditampilkan eksplisit agar mudah diaudit.</div></div><span class="badge">AUTO</span></div>
+      <div class="flowBridge">
+        <div class="flowNode"><label>1. Gross</label><strong id="flowGross">Rp0</strong></div>
+        <div class="flowNode warn"><label>2. Fee + Refund</label><strong id="flowDeduct">Rp0</strong></div>
+        <div class="flowNode"><label>3. Net Transaction</label><strong id="flowNet">Rp0</strong></div>
+        <div class="flowNode"><label>4. Opening + Adj</label><strong id="flowFunds">Rp0</strong></div>
+        <div class="flowNode warn"><label>5. Payout</label><strong id="flowPayout">Rp0</strong></div>
+        <div class="flowNode good"><label>6. Expected Closing</label><strong id="flowExpected">Rp0</strong></div>
+        <div class="flowNode" id="flowVarianceNode"><label>7. Variance</label><strong id="flowVariance">Rp0</strong></div>
+      </div>
+    </section>
+
+    <section class="card pad" style="margin-bottom:16px">
+      <div class="cardhead"><div><h2>Cutoff Allocation</h2><div class="sub">Memecah batch berdasarkan cutoff aktif dari Workspace 01 tanpa mengubah total uang.</div></div><span class="badge" id="balCutoffBadge">23:00</span></div>
+      <div class="cutoffAllocation">
+        <div class="allocationControl"><div class="field"><label>Batch / tanggal penutupan</label><select id="balBatchDate"><option value="">Belum ada data Cutoff</option></select></div><div class="note" id="balBatchWindow">Upload data transaksi di Workspace 01.</div></div>
+        <div class="allocationMetric"><label>Carry-in</label><strong id="balCarryIn">Rp0</strong><small>Hari sebelumnya setelah cutoff</small></div>
+        <div class="allocationMetric"><label>Sebelum Cutoff</label><strong id="balBeforeCutoff">Rp0</strong><small>Hari batch sebelum jam cutoff</small></div>
+        <div class="allocationMetric"><label>Net Batch</label><strong id="balBatchNet">Rp0</strong><small>Carry-in + sebelum cutoff</small></div>
+        <div class="allocationMetric"><label>Carry-out</label><strong id="balCarryOut">Rp0</strong><small>Setelah cutoff → batch berikut</small></div>
+      </div>
+      <div class="note" id="balAllocationAudit" style="margin-top:10px">Cutoff allocation akan aktif setelah data transaksi tersedia.</div>
+    </section>
+
+    <section class="card pad">
+      <div class="cardhead"><div><h2>Formula & Audit Logic</h2><div class="sub">Aturan perhitungan yang dipakai dashboard.</div></div><span class="badge good">TRANSPARENT</span></div>
+      <div class="formulaBox"><b>Net Transaction</b> = Gross Omzet − Fee − Refund/Reversal<br><b>Expected Closing</b> = Saldo Awal Available + Saldo Awal Unsettled + Net Transaction + Adjustment Credit − Adjustment Debit − Total Pencairan<br><b>Actual Closing</b> = Saldo Akhir Available + Saldo Akhir Unsettled<br><b>Variance</b> = Expected Closing − Actual Closing. Target: <code>Rp0</code> atau berada dalam toleransi manual.</div>
+    </section>
+  </main>
+
+    </section>
+  </div>
+
+  <div class="footer">DDT QRIS Intelligence V4.2 Financial Control • 100% local browser processing • <span class="auditStamp"><i></i> Asia/Jakarta / WIB live clock</span> • Shortcut: <span class="kbd">Alt+1</span> Cutoff <span class="kbd">Alt+2</span> Reconciliation <span class="kbd">Alt+3</span> Balance <span class="kbd">Alt+E</span> Export.</div>
+</div>
+<button class="floatingTop" id="floatingTop" title="Kembali ke atas" aria-label="Kembali ke atas">↑</button>
+<div class="toast" id="toast"></div>
+<script>
+const CORE = (() => {
+  const pad=n=>String(n).padStart(2,'0');
+  function parseNumber(v){
+    if(v==null||v==='') return 0;
+    if(typeof v==='number') return Number.isFinite(v)?v:0;
+    let s=String(v).trim();
+    if(!s) return 0;
+    s=s.replace(/\s/g,'').replace(/Rp/gi,'');
+    // 1,234,567.89 or 1.234.567,89
+    if(s.includes(',') && s.includes('.')){
+      if(s.lastIndexOf(',')>s.lastIndexOf('.')) s=s.replace(/\./g,'').replace(',','.');
+      else s=s.replace(/,/g,'');
+    } else if((s.match(/,/g)||[]).length>1) s=s.replace(/,/g,'');
+    else if((s.match(/\./g)||[]).length>1) s=s.replace(/\./g,'');
+    else if(s.includes(',') && /,\d{1,2}$/.test(s)) s=s.replace(',','.');
+    else s=s.replace(/,/g,'');
+    const n=Number(s.replace(/[^0-9+\-.]/g,''));
+    return Number.isFinite(n)?n:0;
+  }
+  function parseDateTime(v){
+    if(v instanceof Date && !isNaN(v)) return v.getTime();
+    if(typeof v==='number'){
+      // Excel serial
+      if(v>20000 && v<100000) return new Date(1899,11,30).getTime()+v*86400000;
+      if(v>1e11) return v;
+    }
+    const s=String(v||'').trim(); if(!s) return NaN;
+    let m=s.match(/^(\d{4})[-\/]([01]?\d)[-\/]([0-3]?\d)[ T]([0-2]?\d):([0-5]?\d)(?::([0-5]?\d))?/);
+    if(m) return new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+(m[6]||0)).getTime();
+    m=s.match(/^([0-3]?\d)[-\/]([01]?\d)[-\/](\d{4})(?:[ T]([0-2]?\d):([0-5]?\d)(?::([0-5]?\d))?)?/);
+    if(m) return new Date(+m[3],+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0),+(m[6]||0)).getTime();
+    const d=new Date(s); return isNaN(d)?NaN:d.getTime();
+  }
+  function ymd(ms){ const d=new Date(ms); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+  function hm(ms){ const d=new Date(ms); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+  function dateAt(ymdStr, minute){
+    const [y,m,d]=ymdStr.split('-').map(Number); return new Date(y,m-1,d,Math.floor(minute/60),minute%60,0,0).getTime();
+  }
+  function addDaysYMD(s, delta){ const [y,m,d]=s.split('-').map(Number); const x=new Date(y,m-1,d+delta); return ymd(x.getTime()); }
+  function timeMinute(ms){ const d=new Date(ms); return d.getHours()*60+d.getMinutes(); }
+  function lowerBound(arr,x){ let lo=0,hi=arr.length; while(lo<hi){const mid=(lo+hi)>>1;if(arr[mid]<x)lo=mid+1;else hi=mid;} return lo; }
+  function buildSeries(rows, metric='total'){
+    const a=rows.slice().sort((x,y)=>x.ts-y.ts); const times=a.map(r=>r.ts); const pref=[0];
+    for(const r of a) pref.push(pref[pref.length-1]+(Number(r[metric])||0));
+    return {rows:a,times,pref,min:times[0]||NaN,max:times[times.length-1]||NaN, sum(start,end){const i=lowerBound(times,start),j=lowerBound(times,end);return pref[j]-pref[i];}};
+  }
+  function batchDateFor(ts, cutoffMinute){ const d=ymd(ts); return timeMinute(ts)>=cutoffMinute?addDaysYMD(d,1):d; }
+  function aggregateBatches(rows, cutoffMinute, metric='total'){
+    const m=new Map();
+    for(const r of rows){ const bd=batchDateFor(r.ts,cutoffMinute); let o=m.get(bd); if(!o) m.set(bd,o={date:bd,count:0,amount:0,fee:0,total:0}); o.count++; o.amount+=r.amount||0;o.fee+=r.fee||0;o.total+=r.total||0; }
+    return [...m.values()].sort((a,b)=>a.date.localeCompare(b.date)).map(o=>({...o,start:addDaysYMD(o.date,-1)+' '+pad(Math.floor(cutoffMinute/60))+':'+pad(cutoffMinute%60),end:o.date+' '+pad(Math.floor(cutoffMinute/60))+':'+pad(cutoffMinute%60)}));
+  }
+  function searchCutoff(rows, observations, metric='total', lags=[0,1,2]){
+    if(!rows.length || !observations.length) return [];
+    const s=buildSeries(rows,metric); const out=[];
+    for(let minute=0;minute<1440;minute++){
+      for(const lag of lags){
+        const errs=[]; let valid=0; let sumAbs=0; let sumObs=0; const details=[];
+        for(const ob of observations){
+          const closeDate=addDaysYMD(ob.date,-lag); const end=dateAt(closeDate,minute); const start=end-86400000;
+          const covered=s.min<=start && s.max>=end-1000;
+          if(!covered){ details.push({date:ob.date,covered:false}); continue; }
+          const predicted=s.sum(start,end); const observed=Number(ob.amount)||0; const abs=Math.abs(predicted-observed); const pct=abs/Math.max(Math.abs(observed),1);
+          errs.push(pct); sumAbs+=abs; sumObs+=Math.abs(observed); valid++; details.push({date:ob.date,covered:true,predicted,observed,abs,pct});
+        }
+        if(!valid) continue;
+        errs.sort((a,b)=>a-b); const median=errs[Math.floor(errs.length/2)]; const wape=sumAbs/Math.max(sumObs,1);
+        // penalize incomplete evidence
+        const coverage=valid/observations.length; const score=(0.7*wape+0.3*median) + (1-coverage)*0.5;
+        out.push({minute,lag,score,wape,median,coverage,valid,details});
+      }
+    }
+    out.sort((a,b)=>a.score-b.score || b.valid-a.valid);
+    return out;
+  }
+  function longestGaps(rows, top=8){ const a=rows.slice().sort((x,y)=>x.ts-y.ts); const gaps=[]; for(let i=1;i<a.length;i++){const diff=a[i].ts-a[i-1].ts;if(diff>=5*60000)gaps.push({start:a[i-1].ts,end:a[i].ts,minutes:diff/60000});} return gaps.sort((x,y)=>y.minutes-x.minutes).slice(0,top); }
+  function compareCutoffs(rows,a,b){
+    const aa=aggregateBatches(rows,a), bb=aggregateBatches(rows,b); const ma=new Map(aa.map(x=>[x.date,x])), mb=new Map(bb.map(x=>[x.date,x])); const dates=[...new Set([...ma.keys(),...mb.keys()])].sort();
+    return dates.map(date=>{const x=ma.get(date)||{},y=mb.get(date)||{}; return {date,a:x.total||0,b:y.total||0,diff:(x.total||0)-(y.total||0),countA:x.count||0,countB:y.count||0};});
+  }
+  return {parseNumber,parseDateTime,ymd,hm,dateAt,addDaysYMD,timeMinute,buildSeries,batchDateFor,aggregateBatches,searchCutoff,longestGaps,compareCutoffs};
+})();
+if(typeof module!=='undefined') module.exports=CORE;
+
+
+const $=s=>document.querySelector(s); const $$=s=>[...document.querySelectorAll(s)];
+const state={rows:[],files:[],obs:[],stats:{imported:0,dup:0,invalid:0},filtered:[],candidates:[],selectedMinute:1380};
+state.recon={a:[],b:[],aIgnored:[],bIgnored:[],fileA:'',fileB:'',matches:[],onlyA:[],onlyB:[],view:'diff'};
+const money=n=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:2}).format(Number(n)||0);
+const num=n=>new Intl.NumberFormat('id-ID',{maximumFractionDigits:2}).format(Number(n)||0);
+const pct=n=>new Intl.NumberFormat('id-ID',{style:'percent',minimumFractionDigits:2,maximumFractionDigits:3}).format(Number(n)||0);
+const fmtDT=ms=>{const d=new Date(ms); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;};
+const fmtMin=m=>`${String(Math.floor(m/60)%24).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+
+const SESSION_STARTED=Date.now();
+function clamp(n,a=0,b=100){return Math.max(a,Math.min(b,n))}
+function quantile(values,q){if(!values.length)return NaN;const a=values.slice().sort((x,y)=>x-y),p=(a.length-1)*q,b=Math.floor(p),r=p-b;return a[b+1]!==undefined?a[b]+r*(a[b+1]-a[b]):a[b]}
+function setMeter(id,value){const e=$(id);if(e)e.style.width=`${clamp(Number(value)||0)}%`}
+function startLiveClock(){
+  const tf=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Jakarta',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  const df=new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Jakarta',weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  const tick=()=>{const now=new Date(),up=Math.floor((Date.now()-SESSION_STARTED)/1000),h=Math.floor(up/3600),m=Math.floor((up%3600)/60),s=up%60;if($('#liveClock'))$('#liveClock').textContent=tf.format(now);if($('#liveDate'))$('#liveDate').textContent=df.format(now);if($('#sessionUptime'))$('#sessionUptime').textContent=`UP ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`};tick();setInterval(tick,1000);
+}
+function syncExecutiveCutoff(){
+  const rows=state.filtered||[], imported=state.stats.imported||0, invalid=state.stats.invalid||0, dup=state.stats.dup||0, denom=Math.max(imported,1);
+  const health=imported?clamp(100-(invalid/denom*72)-(dup/denom*28)):0;
+  if($('#cHealthScore'))$('#cHealthScore').textContent=imported?`${health.toFixed(1)}%`:'—';setMeter('#cHealthBar',health);
+  if($('#cHealthMeta'))$('#cHealthMeta').textContent=imported?`${num(invalid)} invalid • ${num(dup)} duplicate dibuang`:'Belum ada dataset';
+  const best=state.candidates?.[0], tol=+($('#tolerance')?.value||.005), obs=state.obs?.length||0;
+  if($('#cBestCutoff'))$('#cBestCutoff').textContent=best?`${fmtMin(best.minute)} WIB`:rows.length?`${fmtMin(state.selectedMinute)} WIB`:'—';
+  if($('#cBestMeta'))$('#cBestMeta').textContent=best?`WAPE ${pct(best.wape)} • coverage ${pct(best.coverage)} • lag ${best.lag}d`:rows.length?'Simulator • belum evidence':'Simulation only';
+  if($('#cEvidence'))$('#cEvidence').textContent=num(obs);if($('#cEvidenceMeta'))$('#cEvidenceMeta').textContent=obs?`${obs} settlement point${obs>1?'s':''} untuk calibration`:'Belum dikalibrasi';
+  const flags=[];if(rows.length&&obs===0)flags.push('tanpa evidence settlement');if(invalid)flags.push(`${num(invalid)} datetime invalid`);if(imported&&dup/imported>.05)flags.push('duplicate >5%');if(rows.length>1&&((rows.at(-1).ts-rows[0].ts)<20*3600000))flags.push('rentang data <20 jam');if(best&&best.coverage<.8)flags.push('coverage evidence <80%');if(best&&best.wape>tol)flags.push('WAPE di atas toleransi');
+  if($('#cRiskCount')){$('#cRiskCount').textContent=num(flags.length);$('#cRiskCount').className=flags.length?'red':'accent'}if($('#cRiskMeta'))$('#cRiskMeta').textContent=flags.length?flags.slice(0,2).join(' • '):rows.length?'Tidak ada flag utama':'Menunggu data';
+  let brief='<b>Executive brief:</b> Upload data transaksi untuk menjalankan diagnostic.';
+  if(rows.length&&!obs)brief=`<b>Executive brief:</b> ${num(rows.length)} transaksi siap dianalisis. Jam ${fmtMin(state.selectedMinute)} masih <b>simulasi</b>; masukkan nominal settlement agar cutoff saldo dapat diverifikasi.`;
+  if(best)brief=`<b>Executive brief:</b> kandidat terkuat <b>${fmtMin(best.minute)} WIB</b> dengan WAPE <b>${pct(best.wape)}</b> dan coverage <b>${pct(best.coverage)}</b>. ${best.wape<=tol?'Kandidat berada dalam toleransi aktif.':'Masih di luar toleransi aktif; tambah evidence atau periksa metric/lag.'}`;
+  if($('#cutoffExecutiveBrief'))$('#cutoffExecutiveBrief').innerHTML=brief;
+}
+function syncExecutiveRecon(){
+  const R=state.recon||{},A=R.a?.length||0,B=R.b?.length||0,M=R.matches?.length||0,OA=R.onlyA?.length||0,OB=R.onlyB?.length||0,denom=Math.max(A,B,1),coverage=(A||B)?M/denom*100:0;
+  if($('#rExecCoverage'))$('#rExecCoverage').textContent=(A||B)?`${coverage.toFixed(2)}%`:'—';setMeter('#rExecCoverageBar',coverage);if($('#rExecCoverageMeta'))$('#rExecCoverageMeta').textContent=(A||B)?`${num(M)} matched dari basis ${num(denom)}`:'Upload Data A & B';
+  const exact=(R.matches||[]).filter(x=>String(x.matchMethod||'').startsWith('EXACT')).length, exactRate=M?exact/M*100:0;if($('#rExecExact'))$('#rExecExact').textContent=M?`${exactRate.toFixed(1)}%`:'—';if($('#rExecExactMeta'))$('#rExecExactMeta').textContent=M?`${num(exact)} exact-ID • ${num(M-exact)} fallback`:'RRN / Order ID';
+  const delays=(R.matches||[]).map(x=>x.absDelaySec).filter(Number.isFinite),p95=quantile(delays,.95);if($('#rExecP95'))$('#rExecP95').textContent=Number.isFinite(p95)?reconFmtDelay(Math.round(p95)):'—';
+  const expA=(R.onlyA||[]).reduce((s,x)=>s+x.amount,0),expB=(R.onlyB||[]).reduce((s,x)=>s+x.amount,0),exp=expA+expB;if($('#rExecExposure'))$('#rExecExposure').textContent=money(exp);if($('#rExecExposureMeta'))$('#rExecExposureMeta').textContent=`A ${money(expA)} • B ${money(expB)}`;
+  let brief='<b>Audit brief:</b> Upload kedua export untuk memulai rekonsiliasi.';if(A||B)brief=`<b>Audit brief:</b> coverage <b>${coverage.toFixed(2)}%</b>; ditemukan <b>${num(OA)}</b> hanya di A dan <b>${num(OB)}</b> hanya di B dengan exposure gabungan <b>${money(exp)}</b>.`;if(A&&B&&OA===0&&OB===0)brief=`<b>Audit brief:</b> kedua export rekonsiliasi penuh pada pairing window aktif. ${M?`Exact-ID strength <b>${exactRate.toFixed(1)}%</b>.`:''}`;if($('#reconExecutiveBrief'))$('#reconExecutiveBrief').innerHTML=brief;
+}
+
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2500)}
+function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
+
+function detectDelimiter(text){const line=(text.split(/\r?\n/).find(x=>x.trim())||''); const cands=[',',';','	']; let best=',',max=-1; for(const d of cands){let q=false,n=0;for(const ch of line){if(ch==='"')q=!q;else if(ch===d&&!q)n++;} if(n>max){max=n;best=d}} return best;}
+function parseCSV(text){const delimiter=detectDelimiter(text);const rows=[];let row=[],cell='',q=false;for(let i=0;i<text.length;i++){const c=text[i];if(c==='"'){if(q&&text[i+1]==='"'){cell+='"';i++;}else q=!q;}else if(c===delimiter&&!q){row.push(cell);cell='';}else if((c==='\n'||c==='\r')&&!q){if(c==='\r'&&text[i+1]==='\n')i++;row.push(cell);cell='';if(row.some(x=>x!==''))rows.push(row);row=[];}else cell+=c;} if(cell||row.length){row.push(cell);rows.push(row)} if(!rows.length)return[];const h=rows[0].map(x=>String(x).trim());return rows.slice(1).map(a=>Object.fromEntries(h.map((k,i)=>[k,a[i]??''])));}
+function normalizeKey(s){return String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'')}
+function pick(obj,aliases){const map=Object.fromEntries(Object.keys(obj).map(k=>[normalizeKey(k),k]));for(const a of aliases){const k=map[normalizeKey(a)];if(k!=null)return obj[k];} return '';}
+function toTx(o,file){
+ const paid=pick(o,['Paid At','PaidAt','Date Time','Datetime','Transaction Date','Waktu','Tanggal']);
+ const ts=CORE.parseDateTime(paid); if(!Number.isFinite(ts))return null;
+ const amount=CORE.parseNumber(pick(o,['Amount','Gross Amount','Nominal','Transaction Amount']));
+ const fee=CORE.parseNumber(pick(o,['Fee','MDR','Admin Fee','Biaya']));
+ let total=CORE.parseNumber(pick(o,['Total','Net','Net Amount','Settlement Amount'])); if(!total && amount) total=amount-fee;
+ return {ts,paidAt:paid,merchant:String(pick(o,['Merchant Name','Merchant','MerchantName'])||''),wallet:String(pick(o,['Wallet','Provider','Channel'])||''),transactionType:String(pick(o,['Transaction Type','Type'])||''),orderId:String(pick(o,['Order ID','OrderId','Transaction ID'])||''),rrn:String(pick(o,['RRN','Reference','Ref No'])||''),amount,fee,total,status:String(pick(o,['Status','Transaction Status'])||''),paymentMethod:String(pick(o,['Payment Method','Method'])||''),memo:String(pick(o,['Memo','Remark','Description'])||''),sourceFile:file};
+}
+async function parseFile(file){
+ const ext=file.name.split('.').pop().toLowerCase();
+ if(ext==='csv') return parseCSV(await file.text());
+ if((ext==='xlsx'||ext==='xls')&&window.XLSX){const buf=await file.arrayBuffer();const wb=XLSX.read(buf,{type:'array',cellDates:true});return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});}
+ throw new Error(ext==='xlsx'||ext==='xls'?'Library XLSX belum termuat. Gunakan CSV atau cek koneksi internet.':'Format tidak didukung');
+}
+async function importFiles(files){
+ let imported=0,invalid=0; const incoming=[];
+ for(const file of files){try{const objs=await parseFile(file);imported+=objs.length;let valid=0;for(const o of objs){const t=toTx(o,file.name);if(t){incoming.push(t);valid++}else invalid++;} state.files.push({name:file.name,rows:objs.length,valid});}catch(e){toast(`${file.name}: ${e.message}`)}}
+ const map=new Map(); for(const r of [...state.rows,...incoming]){const key=r.orderId?`O:${r.orderId}`:r.rrn?`R:${r.rrn}:${r.ts}:${r.amount}`:`X:${r.ts}:${r.wallet}:${r.merchant}:${r.amount}:${r.total}`;if(!map.has(key))map.set(key,r);}
+ const before=state.rows.length+incoming.length;state.rows=[...map.values()].sort((a,b)=>a.ts-b.ts);const dup=before-state.rows.length;state.stats.imported+=imported;state.stats.invalid+=invalid;state.stats.dup+=dup;renderFileChips();populateFilters();setDefaultDates();applyFilters();toast(`${incoming.length} transaksi valid ditambahkan • ${dup} duplikat dibuang`);
+}
+function renderFileChips(){$('#fileChips').innerHTML=state.files.map(f=>`<span class="chip"><b>${escapeHtml(f.name)}</b> ${num(f.valid)} valid</span>`).join('')}
+function populateFilters(){const cur=$('#walletFilter').value;const wallets=[...new Set(state.rows.map(r=>r.wallet).filter(Boolean))].sort();$('#walletFilter').innerHTML='<option value="__ALL__">Semua Wallet</option>'+wallets.map(w=>`<option value="${escapeHtml(w)}">${escapeHtml(w)}</option>`).join('');if(wallets.includes(cur))$('#walletFilter').value=cur;}
+function setDefaultDates(){if(!state.rows.length)return; if(!$('#dateFrom').value)$('#dateFrom').value=CORE.ymd(state.rows[0].ts);if(!$('#dateTo').value)$('#dateTo').value=CORE.ymd(state.rows.at(-1).ts);if(!$('#obsDate').value)$('#obsDate').value=CORE.ymd(state.rows.at(-1).ts);}
+function applyFilters(){
+ const wallet=$('#walletFilter').value, merchant=$('#merchantFilter').value.trim().toLowerCase(), from=$('#dateFrom').value, to=$('#dateTo').value, done=$('#doneOnly').checked;
+ const fromMs=from?CORE.dateAt(from,0):-Infinity,toMs=to?CORE.dateAt(CORE.addDaysYMD(to,1),0):Infinity;
+ state.filtered=state.rows.filter(r=>(wallet==='__ALL__'||r.wallet===wallet)&&(!merchant||r.merchant.toLowerCase().includes(merchant))&&r.ts>=fromMs&&r.ts<toMs&&(!done||String(r.status).toUpperCase()==='DONE'));
+ renderAll();
+}
+function minuteFromInput(){const [h,m]=($('#cutoffTime').value||'23:00').split(':').map(Number);return h*60+m;}
+function renderAll(){state.selectedMinute=minuteFromInput(); renderKpis();renderSimulator();renderBatches();renderAround();renderGaps();drawTraffic();drawCompare();runCalibration();renderQuality();syncExecutiveCutoff();refreshBalanceBatchOptions();}
+function renderKpis(){const r=state.filtered;const gross=r.reduce((s,x)=>s+x.amount,0),fee=r.reduce((s,x)=>s+x.fee,0),net=r.reduce((s,x)=>s+x.total,0);$('#kTx').textContent=num(r.length);$('#kGross').textContent=money(gross);$('#kFee').textContent=money(fee);$('#kNet').textContent=money(net);$('#kWallet').textContent=new Set(r.map(x=>x.wallet).filter(Boolean)).size;$('#filteredBadge').textContent=`${num(r.length)} rows`;if(r.length){$('#kRange').textContent=`${CORE.ymd(r[0].ts)} → ${CORE.ymd(r.at(-1).ts)}`;$('#kRangeSub').textContent=`${CORE.hm(r[0].ts)} — ${CORE.hm(r.at(-1).ts)}`;}else{$('#kRange').textContent='—';$('#kRangeSub').textContent='Paid At';}}
+function renderSimulator(){const m=state.selectedMinute;const label=fmtMin(m);$('#cutoffDisplay').textContent=label;$('#batchBadge').textContent=label;const batches=CORE.aggregateBatches(state.filtered,m);const latest=batches.at(-1);$('#simLatest').textContent=latest?.date||'—';$('#simNet').textContent=money(latest?.total||0);$('#simCount').textContent=num(latest?.count||0);$('#simExplain').textContent=`Cutoff ${label} berarti transaksi sebelum ${label} masuk batch yang ditutup hari itu; transaksi mulai ${label} masuk batch penutupan tanggal berikutnya.`;}
+function renderBatches(){const b=CORE.aggregateBatches(state.filtered,state.selectedMinute);$('#batchBody').innerHTML=b.length?b.map(x=>`<tr><td><b>${x.date}</b></td><td>${x.start} → ${x.end}</td><td class="num">${num(x.count)}</td><td class="num">${money(x.amount)}</td><td class="num">${money(x.fee)}</td><td class="num"><b>${money(x.total)}</b></td></tr>`).join(''):`<tr><td colspan="6" class="empty">Belum ada data</td></tr>`;}
+function renderAround(){const rows=state.filtered,m=state.selectedMinute;if(!rows.length){$('#aroundBody').innerHTML='<tr><td colspan="5" class="empty">Belum ada data</td></tr>';return}const dates=[...new Set(rows.map(r=>CORE.batchDateFor(r.ts,m)))];let samples=[];for(const d of dates){const cut=CORE.dateAt(d,m);for(const r of rows){const delta=(r.ts-cut)/60000;if(Math.abs(delta)<=15)samples.push({...r,delta});}}samples.sort((a,b)=>a.ts-b.ts);if(samples.length>250){const step=Math.ceil(samples.length/250);samples=samples.filter((_,i)=>i%step===0).slice(0,250)}$('#aroundBody').innerHTML=samples.length?samples.map(r=>`<tr><td>${fmtDT(r.ts)}</td><td><span class="badge ${r.delta<0?'warn':'good'}">${r.delta>=0?'+':''}${r.delta.toFixed(1)}m</span></td><td>${escapeHtml(r.wallet)}</td><td>${escapeHtml(r.merchant)}</td><td class="num">${money(r.total)}</td></tr>`).join(''):`<tr><td colspan="5" class="empty">Tidak ada transaksi ±15 menit dari cutoff ini</td></tr>`;}
+function renderGaps(){const g=CORE.longestGaps(state.filtered,8);$('#gapBadge').textContent=`${g.length} GAP`;$('#gapBody').innerHTML=g.length?g.map(x=>`<tr><td>${fmtDT(x.start)}</td><td>${fmtDT(x.end)}</td><td class="num"><b>${x.minutes>=60?(x.minutes/60).toFixed(2)+' jam':x.minutes.toFixed(1)+' min'}</b></td></tr>`).join(''):`<tr><td colspan="3" class="empty">Belum ada gap ≥5 menit</td></tr>`;}
+function prepCanvas(canvas){const dpr=window.devicePixelRatio||1,rect=canvas.getBoundingClientRect();canvas.width=Math.max(320,rect.width*dpr);canvas.height=Math.max(180,rect.height*dpr);const c=canvas.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);return {c,w:rect.width,h:rect.height};}
+function drawAxes(c,w,h,max,yLabel=''){c.strokeStyle='rgba(92,142,171,.18)';c.lineWidth=1;c.fillStyle='#6f91a6';c.font='10px system-ui';for(let i=0;i<=4;i++){const y=16+(h-42)*i/4;c.beginPath();c.moveTo(42,y);c.lineTo(w-8,y);c.stroke();const v=max*(1-i/4);c.fillText(v>=1e9?(v/1e9).toFixed(1)+'B':v>=1e6?(v/1e6).toFixed(1)+'M':Math.round(v),4,y+3);}}
+function drawTraffic(){const canvas=$('#trafficChart'),{c,w,h}=prepCanvas(canvas);c.clearRect(0,0,w,h);const bins=Array(96).fill(0),counts=Array(96).fill(0);for(const r of state.filtered){const d=new Date(r.ts),i=Math.floor((d.getHours()*60+d.getMinutes())/15);bins[i]+=r.total;counts[i]++;}const max=Math.max(...bins,1);drawAxes(c,w,h,max);const left=42,right=8,top=16,bottom=26,pw=w-left-right,ph=h-top-bottom,bw=pw/96;c.fillStyle='rgba(55,215,255,.65)';for(let i=0;i<96;i++){const bh=ph*bins[i]/max;c.fillRect(left+i*bw+0.5,top+ph-bh,Math.max(1,bw-1),bh)}c.fillStyle='#7294a8';c.font='10px system-ui';for(let hr=0;hr<=24;hr+=3){const x=left+pw*(hr/24);c.fillText(String(hr).padStart(2,'0')+':00',x-12,h-6)}const peak=bins.indexOf(Math.max(...bins));$('#trafficNote').textContent=state.filtered.length?`Peak 15 menit: ${fmtMin(peak*15)}–${fmtMin((peak*15+15)%1440)} • ${num(counts[peak])} transaksi • ${money(bins[peak])} net.`:'Belum ada data.';}
+function drawCompare(){const canvas=$('#compareChart'),{c,w,h}=prepCanvas(canvas);c.clearRect(0,0,w,h);const cmp=CORE.compareCutoffs(state.filtered,1380,0).filter(x=>x.a&&x.b);if(!cmp.length){c.fillStyle='#7797aa';c.font='12px system-ui';c.fillText('Butuh data yang melintasi kedua cutoff.',20,40);$('#compareNote').textContent='Belum ada batch yang bisa dibandingkan penuh.';return}const max=Math.max(...cmp.flatMap(x=>[x.a,x.b]),1);drawAxes(c,w,h,max);const left=42,right=8,top=16,bottom=32,pw=w-left-right,ph=h-top-bottom,group=pw/cmp.length,bw=Math.max(3,group*.28);for(let i=0;i<cmp.length;i++){const x=left+i*group+group/2;c.fillStyle='rgba(255,180,84,.78)';let bh=ph*cmp[i].a/max;c.fillRect(x-bw-1,top+ph-bh,bw,bh);c.fillStyle='rgba(55,215,255,.78)';bh=ph*cmp[i].b/max;c.fillRect(x+1,top+ph-bh,bw,bh);c.fillStyle='#7898ac';c.font='9px system-ui';c.fillText(cmp[i].date.slice(5),x-18,h-8)}const abs=cmp.reduce((s,x)=>s+Math.abs(x.diff),0);$('#compareNote').innerHTML=`<span style="color:#ffbf6b">■ 23:00</span> &nbsp; <span style="color:#63ddff">■ 00:00</span> &nbsp; Total selisih absolut pada batch yang overlap: <b>${money(abs)}</b>.`;}
+
+function loadObs(){try{state.obs=JSON.parse(localStorage.getItem('qrisCutoffObsV1')||'[]')}catch{state.obs=[]}renderObs();}
+function saveObs(){try{localStorage.setItem('qrisCutoffObsV1',JSON.stringify(state.obs));}catch(e){/* file:// may block localStorage; keep session state */}}
+function renderObs(){$('#obsBody').innerHTML=state.obs.length?state.obs.map((o,i)=>`<tr><td>${o.date}</td><td class="num"><b>${money(o.amount)}</b></td><td>${escapeHtml(o.note||'')}</td><td><button class="btn" data-delobs="${i}">Hapus</button></td></tr>`).join(''):`<tr><td colspan="4" class="empty">Belum ada evidence settlement</td></tr>`;$$('[data-delobs]').forEach(b=>b.onclick=()=>{state.obs.splice(+b.dataset.delobs,1);saveObs();renderObs();runCalibration();syncExecutiveCutoff();});}
+function distinctCandidates(cands,max=12){const out=[];for(const c of cands){if(out.every(x=>Math.abs(x.minute-c.minute)>7||x.lag!==c.lag))out.push(c);if(out.length>=max)break}return out;}
+function runCalibration(){
+ if(!state.obs.length||!state.filtered.length){state.candidates=[];$('#candidateBody').innerHTML='<tr><td colspan="6" class="empty">Tambahkan evidence settlement dan data transaksi</td></tr>';$('#candidateBadge').textContent='NO EVIDENCE';$('#bestCandidate').className='empty';$('#bestCandidate').textContent='Tambahkan minimal satu nominal settlement untuk menjalankan pencocokan.';updateAccuracy(null);return;}
+ const lag=$('#lagMode').value,lags=lag==='auto'?[0,1,2]:[+lag];const metric=$('#matchMetric').value;const all=CORE.searchCutoff(state.filtered,state.obs,metric,lags);const cands=distinctCandidates(all,12);state.candidates=cands;const best=all[0];
+ $('#candidateBody').innerHTML=cands.length?cands.map((c,i)=>`<tr><td>${i+1}</td><td><b>${fmtMin(c.minute)}</b></td><td>${c.lag} hari</td><td class="num">${pct(c.wape)}</td><td class="num">${pct(c.coverage)}</td><td><button class="btn" data-apply="${c.minute}">Pakai</button></td></tr>`).join(''):`<tr><td colspan="6" class="empty">Tidak ada observation dengan rentang data yang lengkap.</td></tr>`;
+ $$('[data-apply]').forEach(b=>b.onclick=()=>{$('#cutoffTime').value=fmtMin(+b.dataset.apply);renderAll();toast('Cutoff simulator diperbarui')});
+ if(best){const tol=+$('#tolerance').value,pass=best.wape<=tol;$('#bestCandidate').className='rankbest';$('#bestCandidate').innerHTML=`<div class="sub">KANDIDAT TERKUAT</div><div class="big">${fmtMin(best.minute)} WIB</div><div class="meta"><span>Lag: <b>${best.lag} hari</b></span><span>WAPE: <b>${pct(best.wape)}</b></span><span>Coverage: <b>${pct(best.coverage)}</b></span><span>${pass?'Dalam toleransi':'Di luar toleransi'}</span></div>`;$('#candidateBadge').textContent=`BEST ${fmtMin(best.minute)}`;updateAccuracy(best);}else updateAccuracy(null);
+}
+function updateAccuracy(best){const badge=$('#accuracyBadge'),big=$('#statusBig'),txt=$('#accuracyText'),bar=$('#accuracyBar'),note=$('#coverageNote');if(!best){badge.textContent='BELUM TERVERIFIKASI';badge.className='badge warn';big.textContent=state.filtered.length?'Butuh bukti settlement':'Menunggu data';big.className='statusbig pending';txt.innerHTML='<b>Mode transaction-only.</b> Jam transaksi dapat menunjukkan jam channel aktif, tetapi tidak cukup untuk membuktikan cutoff saldo.';bar.style.width=state.filtered.length?'25%':'0%';note.textContent=state.filtered.length?'Tambahkan 2–3 nominal settlement dari tanggal berbeda untuk hasil yang jauh lebih kuat.':'Upload data transaksi untuk mulai analisis.';return}let label,cls,width;if(best.valid>=3&&best.wape<=.001){label='SANGAT TINGGI';cls='verified';width=98}else if(best.valid>=2&&best.wape<=.005){label='TINGGI';cls='verified';width=88}else if(best.valid>=2&&best.wape<=.02){label='SEDANG';cls='low';width=68}else{label='RENDAH';cls='low';width=48}badge.textContent=`CONFIDENCE ${label}`;badge.className=`badge ${cls==='verified'?'good':'warn'}`;big.textContent=`${fmtMin(best.minute)} WIB`;big.className=`statusbig ${cls}`;txt.innerHTML=`Kandidat cutoff saldo berdasarkan <b>${best.valid} evidence</b> yang memiliki coverage penuh. Error gabungan WAPE <b>${pct(best.wape)}</b> dengan settlement lag <b>${best.lag} hari</b>.`;bar.style.width=width+'%';note.textContent=best.valid<2?'Baru 1 evidence yang cocok. Tambahkan minimal 1–2 tanggal settlement lain sebelum menganggap cutoff terverifikasi.':best.coverage<1?'Sebagian evidence tidak memiliki rentang transaksi penuh dan diberi penalti coverage.':'Semua evidence yang dipakai memiliki rentang transaksi penuh menurut timestamp file.';}
+function renderQuality(){$('#qImported').textContent=num(state.stats.imported);$('#qDup').textContent=num(state.stats.dup);$('#qInvalid').textContent=num(state.stats.invalid);const r=state.rows;if(!r.length){$('#qualityBadge').textContent='WAITING';$('#qualityNote').textContent='Tidak ada data.';return}const statuses=[...new Set(r.map(x=>x.status||'(blank)'))];$('#qualityBadge').textContent=state.stats.invalid?'CHECK':'OK';$('#qualityBadge').className=`badge ${state.stats.invalid?'warn':'good'}`;$('#qualityNote').textContent=`Range seluruh file: ${fmtDT(r[0].ts)} → ${fmtDT(r.at(-1).ts)}. Status terdeteksi: ${statuses.join(', ')}. Pastikan export memang mencakup seluruh rentang waktu yang ingin dicocokkan dengan settlement.`;}
+
+
+// === V2: two-way reconciliation engine ===
+function reconNormUser(v){return String(v??'').trim().toLowerCase().replace(/\s+/g,' ')}
+function reconExtractUser(o,side){
+  let u=pick(o,['User','Username','User ID','Userid','Member','Player','Player ID']);
+  if(!u && side==='A'){
+    const memo=String(pick(o,['Memo','Remark','Description'])||'');
+    u=memo.split('||')[0]||'';
+  }
+  return reconNormUser(u);
+}
+function reconCanonical(o,side,file,rowNo){
+  const rawTime=side==='A'?pick(o,['Paid At','PaidAt','Created At','CreatedAt','Tanggal Terima','Date Time','Datetime','Waktu','Tanggal']):pick(o,['Tanggal Terima','Paid At','Created At','Date Time','Datetime','Waktu','Tanggal']);
+  const rawAmount=side==='A'?pick(o,['Amount','Nominal','Jumlah','Gross Amount','Transaction Amount']):pick(o,['Jumlah','Amount','Nominal','Gross Amount','Transaction Amount']);
+  const user=reconExtractUser(o,side), amount=CORE.parseNumber(rawAmount), ts=CORE.parseDateTime(rawTime);
+  const valid=!!user && amount>0 && Number.isFinite(ts);
+  const orderId=String(pick(o,['Order ID','OrderId','Transaction ID','TransactionId'])||'').trim().toLowerCase();
+  const rrn=String(pick(o,['RRN','Reference','Ref No','Reference No'])||'').trim().toLowerCase();
+  return {side,file,rowNo,raw:o,user,amount,ts,rawTime:String(rawTime||''),valid,key:user+'|'+Math.round(amount*100),orderId,rrn};
+}
+function reconGroupPair(A,B){
+  const a=A.slice().sort((x,y)=>x.ts-y.ts), b=B.slice().sort((x,y)=>x.ts-y.ts), pairs=[];
+  if(!a.length||!b.length)return {pairs,onlyA:a,onlyB:b};
+  // Minimum-cost ordered subset pairing. The smaller side is fully paired; surplus rows remain unmatched.
+  function chooseSubset(big,small,bigIsA){
+    const n=big.length,m=small.length,INF=1e30;
+    const dp=Array.from({length:n+1},()=>Array(m+1).fill(INF));
+    const take=Array.from({length:n+1},()=>Array(m+1).fill(false));
+    for(let i=0;i<=n;i++)dp[i][0]=0;
+    for(let i=1;i<=n;i++)for(let j=1;j<=Math.min(i,m);j++){
+      const skip=dp[i-1][j];
+      const dt=Math.abs((big[i-1].ts||0)-(small[j-1].ts||0));
+      const use=dp[i-1][j-1]+dt;
+      if(use<=skip){dp[i][j]=use;take[i][j]=true}else dp[i][j]=skip;
+    }
+    let i=n,j=m;const usedBig=new Set(), usedSmall=new Set(), out=[];
+    while(j>0&&i>0){if(take[i][j]){const x=big[i-1],y=small[j-1];usedBig.add(x);usedSmall.add(y);out.push(bigIsA?[x,y]:[y,x]);i--;j--;}else i--;}
+    out.reverse();
+    return {pairs:out,onlyBig:big.filter(x=>!usedBig.has(x)),onlySmall:small.filter(x=>!usedSmall.has(x))};
+  }
+  if(a.length>=b.length){const r=chooseSubset(a,b,true);return {pairs:r.pairs,onlyA:r.onlyBig,onlyB:r.onlySmall};}
+  const r=chooseSubset(b,a,false);return {pairs:r.pairs,onlyA:r.onlySmall,onlyB:r.onlyBig};
+}
+function reconPairByExactId(aPool,bPool,field,method){
+  const bMap=new Map();
+  for(const b of bPool){const id=b[field];if(!id)continue;if(!bMap.has(id))bMap.set(id,[]);bMap.get(id).push(b)}
+  const usedA=new Set(),usedB=new Set(),pairs=[];
+  for(const a of aPool){const id=a[field];if(!id||!bMap.has(id))continue;const list=bMap.get(id).filter(b=>!usedB.has(b) && Math.abs((b.amount||0)-(a.amount||0))<0.005);if(!list.length)continue;list.sort((x,y)=>Math.abs(x.ts-a.ts)-Math.abs(y.ts-a.ts));const b=list[0];usedA.add(a);usedB.add(b);pairs.push({a,b,matchMethod:method});}
+  return {pairs,remainingA:aPool.filter(x=>!usedA.has(x)),remainingB:bPool.filter(x=>!usedB.has(x))};
+}
+function runReconciliation(){
+  const ra=state.recon.a, rb=state.recon.b;
+  state.recon.matches=[];state.recon.onlyA=[];state.recon.onlyB=[];
+  if(!ra.length&&!rb.length){renderRecon();return;}
+  let aPool=ra.slice(),bPool=rb.slice();
+  // Layer 1-2: exact identifiers when both exports expose them.
+  for(const [field,method] of [['rrn','EXACT RRN'],['orderId','EXACT ORDER ID']]){const x=reconPairByExactId(aPool,bPool,field,method);state.recon.matches.push(...x.pairs.map(p=>({...p,delaySec:Math.round((p.b.ts-p.a.ts)/1000),absDelaySec:Math.round(Math.abs(p.b.ts-p.a.ts)/1000)})));aPool=x.remainingA;bPool=x.remainingB;}
+  // Layer 3: fallback User + Nominal, one-to-one, ordered by closest timestamp.
+  const ga=new Map(),gb=new Map();for(const r of aPool){if(!ga.has(r.key))ga.set(r.key,[]);ga.get(r.key).push(r)}for(const r of bPool){if(!gb.has(r.key))gb.set(r.key,[]);gb.get(r.key).push(r)}
+  const keys=new Set([...ga.keys(),...gb.keys()]);const maxDelaySel=$('#reconMaxDelay');const maxDelaySec=maxDelaySel?(+maxDelaySel.value||0):86400;
+  for(const k of keys){const p=reconGroupPair(ga.get(k)||[],gb.get(k)||[]);for(const [a,b] of p.pairs){const abs=Math.round(Math.abs(b.ts-a.ts)/1000);if(maxDelaySec && abs>maxDelaySec){state.recon.onlyA.push(a);state.recon.onlyB.push(b)}else state.recon.matches.push({a,b,matchMethod:'USER + NOMINAL',delaySec:Math.round((b.ts-a.ts)/1000),absDelaySec:abs});}state.recon.onlyA.push(...p.onlyA);state.recon.onlyB.push(...p.onlyB)}
+  state.recon.matches.sort((x,y)=>x.a.ts-y.a.ts);state.recon.onlyA.sort((x,y)=>x.ts-y.ts);state.recon.onlyB.sort((x,y)=>x.ts-y.ts);renderRecon();
+}
+function reconFmtDelay(sec){if(sec==null||!Number.isFinite(sec))return '—';const sign=sec<0?'-':'';sec=Math.abs(sec);if(sec<60)return `${sign}${sec} dtk`;const m=Math.floor(sec/60),s=sec%60;if(m<60)return `${sign}${m}m ${s}s`;const h=Math.floor(m/60),mm=m%60;return `${sign}${h}j ${mm}m`;}
+function reconMedian(a){if(!a.length)return NaN;const x=a.slice().sort((p,q)=>p-q),n=x.length;return n%2?x[(n-1)/2]:(x[n/2-1]+x[n/2])/2}
+function reconRawText(r){return Object.entries(r.raw||{}).map(([k,v])=>`${k}: ${v}`).join(' | ')}
+function reconCommonCols(side){return side==='A'?['Merchant Name','Wallet','Transaction Type','Order ID','RRN','Amount','Fee','Total','Status','Paid By','Paid At','Payment Method','Checked By','Memo']:['Tanggal Terima','User','Action','Dari Bank','Tujuan Bank','Jumlah','Status','Operator']}
+function reconCellRaw(r,col){const map=Object.fromEntries(Object.keys(r.raw||{}).map(k=>[normalizeKey(k),k]));const key=map[normalizeKey(col)];return key!=null?r.raw[key]:''}
+function reconSearchHit(item,q){if(!q)return true;let text='';if(item.a)text+=reconRawText(item.a)+' ';if(item.b)text+=reconRawText(item.b)+' ';if(item.raw)text+=reconRawText(item);return text.toLowerCase().includes(q)}
+function renderRecon(){
+  const R=state.recon,A=R.a.length,B=R.b.length,M=R.matches.length,OA=R.onlyA.length,OB=R.onlyB.length;
+  $('#rA').textContent=num(A);$('#rB').textContent=num(B);$('#rMatch').textContent=num(M);$('#rOnlyA').textContent=num(OA);$('#rOnlyB').textContent=num(OB);
+  $('#rAIgnored').textContent=`${num(R.aIgnored.length)} diabaikan`;$('#rBIgnored').textContent=`${num(R.bIgnored.length)} diabaikan`;
+  const denom=Math.max(A,B,1);$('#rRate').textContent=`${(M/denom*100).toLocaleString('id-ID',{maximumFractionDigits:3})}% match rate`;
+  $('#rOnlyASum').textContent=money(R.onlyA.reduce((s,x)=>s+x.amount,0));$('#rOnlyBSum').textContent=money(R.onlyB.reduce((s,x)=>s+x.amount,0));
+  const delays=R.matches.map(x=>x.absDelaySec),med=reconMedian(delays),mx=delays.length?Math.max(...delays):NaN,slow=R.matches.filter(x=>x.absDelaySec>600);
+  $('#rMedianDelay').textContent=Number.isFinite(med)?reconFmtDelay(Math.round(med)):'—';$('#rMaxDelay').textContent=Number.isFinite(mx)?reconFmtDelay(mx):'—';$('#rSlowCount').textContent=`${num(slow.length)} review >10m`;
+  $('#tabDiff').textContent=num(OA+OB);$('#tabA').textContent=num(OA);$('#tabB').textContent=num(OB);$('#tabSlow').textContent=num(slow.length);
+  $('#reconFileA').textContent=R.fileA?`${R.fileA} • ${num(A)} valid`:'Belum ada file';$('#reconFileB').textContent=R.fileB?`${R.fileB} • ${num(B)} valid`:'Belum ada file';
+  $$('.reconTab').forEach(x=>x.classList.toggle('active',x.dataset.rview===R.view));
+  renderReconTable();
+  if(A||B){const net=R.onlyA.reduce((s,x)=>s+x.amount,0)-R.onlyB.reduce((s,x)=>s+x.amount,0),exact=R.matches.filter(x=>String(x.matchMethod||'').startsWith('EXACT')).length,windowTxt=$('#reconMaxDelay')?.selectedOptions?.[0]?.textContent||'24 jam';$('#reconSummary').innerHTML=`Hasil: <b>${num(M)}</b> transaksi cocok (${num(exact)} exact-ID), <b style="color:#ff9fac">${num(OA)}</b> hanya di A, <b style="color:#ffd690">${num(OB)}</b> hanya di B. Delta nominal: <b>${money(net)}</b> • pairing window <b>${escapeHtml(windowTxt)}</b>.`;}
+  else $('#reconSummary').textContent='Upload Data A dan Data B untuk mulai rekonsiliasi.';
+  syncExecutiveRecon();
+}
+function renderReconTable(){
+  const R=state.recon,q=$('#reconSearch').value.trim().toLowerCase(),limit=+$('#reconLimit').value||250;let items=[],mode=R.view;
+  if(mode==='onlyA')items=R.onlyA.map(r=>({kind:'onlyA',raw:r}));
+  else if(mode==='onlyB')items=R.onlyB.map(r=>({kind:'onlyB',raw:r}));
+  else if(mode==='slow')items=R.matches.filter(x=>x.absDelaySec>600).map(x=>({kind:'match',...x}));
+  else items=[...R.onlyA.map(r=>({kind:'onlyA',raw:r})),...R.onlyB.map(r=>({kind:'onlyB',raw:r}))].sort((x,y)=>(x.raw?.ts||0)-(y.raw?.ts||0));
+  items=items.filter(x=>reconSearchHit(x,q));const shown=items.slice(0,limit);
+  const h=mode==='slow'?['Status','Metode','User','Nominal','A: Waktu','B: Waktu','Delay','A: Merchant','A: Wallet','A: Order ID','A: RRN','B: Dari Bank','B: Tujuan Bank','B: Operator']:['Status','Sumber','User','Nominal','Waktu','Merchant / Dari Bank','Wallet / Tujuan Bank','Order ID','RRN','Status Asli','Detail Tambahan'];
+  $('#reconHead').innerHTML='<tr>'+h.map((x,i)=>`<th class="${i===3?'num':''}">${escapeHtml(x)}</th>`).join('')+'</tr>';
+  if(!shown.length){$('#reconBody').innerHTML=`<tr><td colspan="${h.length}" class="reconEmpty">${R.a.length||R.b.length?'Tidak ada data pada tampilan ini.':'Upload kedua file untuk melihat hasil.'}</td></tr>`;return;}
+  if(mode==='slow'){$('#reconBody').innerHTML=shown.map(x=>`<tr><td><span class="sideBadge matched">MATCH</span></td><td><span class="badge">${escapeHtml(x.matchMethod||'USER + NOMINAL')}</span></td><td>${escapeHtml(x.a.user)}</td><td class="num">${money(x.a.amount)}</td><td>${fmtDT(x.a.ts)}</td><td>${fmtDT(x.b.ts)}</td><td class="${x.absDelaySec>600?'deltaSlow':'deltaFast'}">${reconFmtDelay(x.delaySec)}</td><td>${escapeHtml(reconCellRaw(x.a,'Merchant Name'))}</td><td>${escapeHtml(reconCellRaw(x.a,'Wallet'))}</td><td>${escapeHtml(reconCellRaw(x.a,'Order ID'))}</td><td>${escapeHtml(reconCellRaw(x.a,'RRN'))}</td><td title="${escapeHtml(reconCellRaw(x.b,'Dari Bank'))}">${escapeHtml(reconCellRaw(x.b,'Dari Bank'))}</td><td title="${escapeHtml(reconCellRaw(x.b,'Tujuan Bank'))}">${escapeHtml(reconCellRaw(x.b,'Tujuan Bank'))}</td><td>${escapeHtml(reconCellRaw(x.b,'Operator'))}</td></tr>`).join('');return;}
+  $('#reconBody').innerHTML=shown.map(x=>{const r=x.raw,sa=x.kind==='onlyA',merchant=sa?reconCellRaw(r,'Merchant Name'):reconCellRaw(r,'Dari Bank'),wallet=sa?reconCellRaw(r,'Wallet'):reconCellRaw(r,'Tujuan Bank'),oid=sa?reconCellRaw(r,'Order ID'):'',rrn=sa?reconCellRaw(r,'RRN'):'',st=reconCellRaw(r,'Status'),extra=sa?reconCellRaw(r,'Memo'):`Operator: ${reconCellRaw(r,'Operator')}`;return `<tr><td><span class="sideBadge ${sa?'onlyA':'onlyB'}">${sa?'MISSING B':'MISSING A'}</span></td><td><span class="sideBadge ${sa?'sideA':'sideB'}">${sa?'A':'B'}</span></td><td><b>${escapeHtml(r.user)}</b></td><td class="num">${money(r.amount)}</td><td>${fmtDT(r.ts)}</td><td title="${escapeHtml(merchant)}">${escapeHtml(merchant)}</td><td title="${escapeHtml(wallet)}">${escapeHtml(wallet)}</td><td>${escapeHtml(oid)}</td><td>${escapeHtml(rrn)}</td><td>${escapeHtml(st)}</td><td title="${escapeHtml(extra)}">${escapeHtml(extra)}</td></tr>`}).join('');
+}
+async function importRecon(file,side){
+  if(!file)return;try{const objs=await parseFile(file),valid=[],ignored=[];objs.forEach((o,i)=>{const r=reconCanonical(o,side,file.name,i+2);(r.valid?valid:ignored).push(r)});if(side==='A'){state.recon.a=valid;state.recon.aIgnored=ignored;state.recon.fileA=file.name}else{state.recon.b=valid;state.recon.bIgnored=ignored;state.recon.fileB=file.name}runReconciliation();toast(`Data ${side}: ${num(valid.length)} valid, ${num(ignored.length)} diabaikan`)}catch(e){toast(`${file.name}: ${e.message}`)}
+}
+function reconExportRows(){
+  const R=state.recon;const aCols=R.a.length?Object.keys(R.a[0].raw):reconCommonCols('A'),bCols=R.b.length?Object.keys(R.b[0].raw):reconCommonCols('B');
+  const onlyA=[['Reason','Normalized User','Normalized Amount','Parsed Time','Source File',...aCols],...R.onlyA.map(r=>['ADA DI A / TIDAK ADA DI B',r.user,r.amount,fmtDT(r.ts),r.file,...aCols.map(c=>r.raw[c]??'')])];
+  const onlyB=[['Reason','Normalized User','Normalized Amount','Parsed Time','Source File',...bCols],...R.onlyB.map(r=>['ADA DI B / TIDAK ADA DI A',r.user,r.amount,fmtDT(r.ts),r.file,...bCols.map(c=>r.raw[c]??'')])];
+  const matched=[['Match Method','User','Amount','A Time','B Time','Delay Seconds','Abs Delay Seconds','A Source','B Source','A Order ID','A RRN'],...R.matches.map(x=>[x.matchMethod||'USER + NOMINAL',x.a.user,x.a.amount,fmtDT(x.a.ts),fmtDT(x.b.ts),x.delaySec,x.absDelaySec,x.a.file,x.b.file,reconCellRaw(x.a,'Order ID'),reconCellRaw(x.a,'RRN')])];
+  return {'Recon_Ringkasan':[['DDT QRIS Data Reconciliation V4 Executive'],['Generated At WIB',new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Jakarta',dateStyle:'short',timeStyle:'medium'}).format(new Date())],['Data A',R.fileA],['Data B',R.fileB],['Valid A',R.a.length],['Valid B',R.b.length],['Matched',R.matches.length],['Only A',R.onlyA.length],['Only B',R.onlyB.length],['Only A Amount',R.onlyA.reduce((s,x)=>s+x.amount,0)],['Only B Amount',R.onlyB.reduce((s,x)=>s+x.amount,0)],['Ignored A',R.aIgnored.length],['Ignored B',R.bIgnored.length]],'ONLY_A_Missing_in_B':onlyA,'ONLY_B_Missing_in_A':onlyB,'MATCHED':matched};
+}
+function exportReconciliation(){
+  const R=state.recon;if(!R.a.length&&!R.b.length){toast('Belum ada Data A/B untuk diexport');return}const sheets=reconExportRows(),stamp=new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+  if(window.XLSX){const wb=XLSX.utils.book_new();for(const [name,rows] of Object.entries(sheets)){const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=Array(Math.min(24,Math.max(...rows.map(r=>r.length)))).fill(null).map((_,i)=>({wch:i<5?20:18}));XLSX.utils.book_append_sheet(wb,ws,name.slice(0,31));}XLSX.writeFile(wb,`QRIS_Reconciliation_AB_${stamp}.xlsx`);toast('Excel rekonsiliasi berhasil dibuat');return}
+  let xml=`<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">`;for(const [name,rows] of Object.entries(sheets)){xml+=`<Worksheet ss:Name="${xmlEscape(name.slice(0,31))}"><Table>`;for(const row of rows){xml+='<Row>';for(const v of row){const type=typeof v==='number'?'Number':'String';xml+=`<Cell><Data ss:Type="${type}">${xmlEscape(v)}</Data></Cell>`}xml+='</Row>'}xml+='</Table></Worksheet>'}xml+='</Workbook>';downloadBlob(new Blob([xml],{type:'application/vnd.ms-excel'}),`QRIS_Reconciliation_AB_${stamp}.xls`);toast('Export rekonsiliasi .xls dibuat');
+}
+function useAForCutoff(){if(!state.recon.a.length){toast('Upload Data A terlebih dahulu');return}const incoming=[];for(const r of state.recon.a){const t=toTx(r.raw,r.file);if(t)incoming.push(t)}const map=new Map();for(const r of [...state.rows,...incoming]){const key=r.orderId?`O:${r.orderId}`:r.rrn?`R:${r.rrn}:${r.ts}:${r.amount}`:`X:${r.ts}:${r.wallet}:${r.merchant}:${r.amount}:${r.total}`;if(!map.has(key))map.set(key,r)}state.rows=[...map.values()].sort((a,b)=>a.ts-b.ts);state.stats.imported+=incoming.length;populateFilters();applyFilters();switchWorkspace('cutoff');toast(`${num(incoming.length)} transaksi Data A dimasukkan ke workspace Cutoff`);setTimeout(()=>document.querySelector('#cutoffPanel .kpis')?.scrollIntoView({behavior:'smooth',block:'start'}),100);}
+function resetRecon(){state.recon={a:[],b:[],aIgnored:[],bIgnored:[],fileA:'',fileB:'',matches:[],onlyA:[],onlyB:[],view:'diff'};$('#reconInputA').value='';$('#reconInputB').value='';$('#reconSearch').value='';renderRecon();toast('Data rekonsiliasi A/B direset')}
+
+function xmlEscape(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function rowsForExport(){const batch=CORE.aggregateBatches(state.filtered,state.selectedMinute);const candidates=state.candidates.map((c,i)=>[i+1,fmtMin(c.minute),c.lag,c.wape,c.coverage,c.valid]);const around=[];const m=state.selectedMinute;for(const r of state.filtered){const cut=CORE.dateAt(CORE.batchDateFor(r.ts,m),m),d=(r.ts-cut)/60000;if(Math.abs(d)<=15)around.push([fmtDT(r.ts),d,r.wallet,r.merchant,r.amount,r.fee,r.total,r.orderId,r.rrn]);}return {
+ 'Ringkasan':[['DDT QRIS Intelligence V4.2 Financial Control'],['Generated At WIB',new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Jakarta',dateStyle:'short',timeStyle:'medium'}).format(new Date())],['Cutoff simulator',fmtMin(state.selectedMinute)],['Total transaksi',state.filtered.length],['Gross',state.filtered.reduce((s,x)=>s+x.amount,0)],['Fee',state.filtered.reduce((s,x)=>s+x.fee,0)],['Net',state.filtered.reduce((s,x)=>s+x.total,0)],['Best candidate',state.candidates[0]?fmtMin(state.candidates[0].minute):'Belum terverifikasi']],
+ 'Batch_Cutoff':[['Batch Date','Window Start','Window End','Tx','Gross','Fee','Net'],...batch.map(x=>[x.date,x.start,x.end,x.count,x.amount,x.fee,x.total])],
+ 'Kandidat':[['Rank','Cutoff','Lag days','WAPE','Coverage','Valid evidence'],...candidates],
+ 'Settlement_Evidence':[['Settlement Date','Amount','Note'],...state.obs.map(o=>[o.date,o.amount,o.note||''])],
+ 'Sekitar_Cutoff':[['Paid At','Delta min','Wallet','Merchant','Amount','Fee','Net','Order ID','RRN'],...around],
+ 'Raw_Transaksi':[['Paid At','Wallet','Merchant','Status','Amount','Fee','Total','Order ID','RRN','Payment Method','Memo','Source File'],...state.filtered.map(r=>[fmtDT(r.ts),r.wallet,r.merchant,r.status,r.amount,r.fee,r.total,r.orderId,r.rrn,r.paymentMethod,r.memo,r.sourceFile])]
+ };}
+function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}
+function exportExcel(){if(!state.filtered.length){toast('Belum ada data untuk diexport');return}const sheets=rowsForExport(),stamp=new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');if(window.XLSX){const wb=XLSX.utils.book_new();for(const [name,rows] of Object.entries(sheets)){const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=Array(Math.min(14,Math.max(...rows.map(r=>r.length)))).fill(null).map((_,i)=>({wch:i===0?20:16}));XLSX.utils.book_append_sheet(wb,ws,name.slice(0,31));}XLSX.writeFile(wb,`QRIS_Cutoff_Audit_${stamp}.xlsx`);toast('Excel .xlsx berhasil dibuat');return}
+ let xml=`<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">`;
+ for(const [name,rows] of Object.entries(sheets)){xml+=`<Worksheet ss:Name="${xmlEscape(name.slice(0,31))}"><Table>`;for(const row of rows){xml+='<Row>';for(const v of row){const type=typeof v==='number'?'Number':'String';xml+=`<Cell><Data ss:Type="${type}">${xmlEscape(v)}</Data></Cell>`}xml+='</Row>'}xml+='</Table></Worksheet>'}xml+='</Workbook>';downloadBlob(new Blob([xml],{type:'application/vnd.ms-excel'}),`QRIS_Cutoff_Audit_${stamp}.xls`);toast('Excel .xls fallback berhasil dibuat');}
+function downloadTemplate(){const csv='Settlement Date,Amount,Note\n2026-09-19,0,contoh payout\n';downloadBlob(new Blob([csv],{type:'text/csv;charset=utf-8'}),'template_settlement_cutoff.csv');}
+function resetAll(){if(!confirm('Reset seluruh data transaksi dan evidence settlement di dashboard ini?'))return;state.rows=[];state.files=[];state.obs=[];state.stats={imported:0,dup:0,invalid:0};state.filtered=[];try{localStorage.removeItem('qrisCutoffObsV1');}catch(e){}$('#fileChips').innerHTML='';$('#merchantFilter').value='';$('#dateFrom').value='';$('#dateTo').value='';populateFilters();renderObs();renderAll();toast('Dashboard direset')}
+
+$('#dropZone').onclick=()=>$('#fileInput').click();$('#fileInput').onchange=e=>importFiles([...e.target.files]);
+for(const ev of ['dragenter','dragover'])$('#dropZone').addEventListener(ev,e=>{e.preventDefault();$('#dropZone').classList.add('drag')});for(const ev of ['dragleave','drop'])$('#dropZone').addEventListener(ev,e=>{e.preventDefault();$('#dropZone').classList.remove('drag')});$('#dropZone').addEventListener('drop',e=>importFiles([...e.dataTransfer.files]));
+['walletFilter','dateFrom','dateTo','doneOnly'].forEach(id=>$('#'+id).addEventListener('change',applyFilters));$('#merchantFilter').addEventListener('input',()=>{clearTimeout(window.__mf);window.__mf=setTimeout(applyFilters,200)});$('#cutoffTime').addEventListener('change',renderAll);$$('[data-time]').forEach(b=>b.onclick=()=>{$('#cutoffTime').value=b.dataset.time;renderAll()});
+$('#addObs').onclick=()=>{const date=$('#obsDate').value,amount=CORE.parseNumber($('#obsAmount').value),note=$('#obsNote').value.trim();if(!date||!amount){toast('Isi tanggal dan nominal settlement');return}state.obs.push({date,amount,note});state.obs.sort((a,b)=>a.date.localeCompare(b.date));saveObs();renderObs();$('#obsAmount').value='';$('#obsNote').value='';runCalibration();syncExecutiveCutoff();toast('Evidence settlement ditambahkan')};
+['matchMetric','lagMode','tolerance'].forEach(id=>$('#'+id).addEventListener('change',()=>{runCalibration();syncExecutiveCutoff()}));$('#btnExport').onclick=exportExcel;$('#btnTemplate').onclick=downloadTemplate;$('#btnReset').onclick=resetAll;window.addEventListener('resize',()=>{clearTimeout(window.__rz);window.__rz=setTimeout(()=>{drawTraffic();drawCompare()},120)});
+
+// Reconciliation UI wiring
+$('#pickReconA').onclick=e=>{e.stopPropagation();$('#reconInputA').click()};$('#pickReconB').onclick=e=>{e.stopPropagation();$('#reconInputB').click()};
+$('#reconInputA').onchange=e=>importRecon(e.target.files[0],'A');$('#reconInputB').onchange=e=>importRecon(e.target.files[0],'B');
+[['reconDropA','A'],['reconDropB','B']].forEach(([id,side])=>{const z=$('#'+id);z.onclick=()=>$('#reconInput'+side).click();for(const ev of ['dragenter','dragover'])z.addEventListener(ev,e=>{e.preventDefault();z.classList.add('drag')});for(const ev of ['dragleave','drop'])z.addEventListener(ev,e=>{e.preventDefault();z.classList.remove('drag')});z.addEventListener('drop',e=>importRecon(e.dataTransfer.files[0],side));});
+$$('.reconTab').forEach(b=>b.onclick=()=>{state.recon.view=b.dataset.rview;renderRecon()});$('#reconSearch').addEventListener('input',()=>{clearTimeout(window.__rs);window.__rs=setTimeout(renderReconTable,120)});$('#reconLimit').addEventListener('change',renderReconTable);$('#reconMaxDelay').addEventListener('change',runReconciliation);
+$('#btnExportRecon').onclick=exportReconciliation;$('#btnUseAForCutoff').onclick=useAForCutoff;$('#btnResetRecon').onclick=resetRecon;
+$('#btnCopyRecon').onclick=async()=>{const table=$('.reconTable table');if(!table)return;const txt=[...table.querySelectorAll('tr')].map(tr=>[...tr.children].map(td=>td.innerText.replace(/\s+/g,' ').trim()).join('\t')).join('\n');try{await navigator.clipboard.writeText(txt);toast('Data tabel tampil disalin')}catch(e){toast('Browser memblokir clipboard; gunakan Export Excel')}};
+renderRecon();
+
+// Balance & Settlement Control
+const BALANCE_NUMERIC_IDS=['balGross','balFee','balRefund','balOpenAvailable','balOpenUnsettled','balCredit','balDebit','balPayout','balCloseAvailable','balCloseUnsettled','balTolerance'];
+function balanceValue(id){return CORE.parseNumber($('#'+id)?.value||0)}
+function balanceMetrics(){
+  const gross=balanceValue('balGross'),fee=balanceValue('balFee'),refund=balanceValue('balRefund'),openAvailable=balanceValue('balOpenAvailable'),openUnsettled=balanceValue('balOpenUnsettled'),credit=balanceValue('balCredit'),debit=balanceValue('balDebit'),payout=balanceValue('balPayout'),closeAvailable=balanceValue('balCloseAvailable'),closeUnsettled=balanceValue('balCloseUnsettled'),tolerance=Math.max(0,balanceValue('balTolerance'));
+  const net=gross-fee-refund,opening=openAvailable+openUnsettled,expected=opening+net+credit-debit-payout,actual=closeAvailable+closeUnsettled,variance=expected-actual,ratio=gross?Math.abs(variance)/Math.abs(gross):NaN;
+  return {gross,fee,refund,openAvailable,openUnsettled,credit,debit,payout,closeAvailable,closeUnsettled,tolerance,net,opening,expected,actual,variance,ratio};
+}
+function saveBalance(){try{const o={};[...BALANCE_NUMERIC_IDS,'balNote'].forEach(id=>o[id]=$('#'+id)?.value??'');localStorage.setItem('qrisBalanceV42',JSON.stringify(o));}catch(e){}}
+function loadBalance(){try{const o=JSON.parse(localStorage.getItem('qrisBalanceV42')||'{}');for(const [id,v] of Object.entries(o)){if($('#'+id))$('#'+id).value=v}}catch(e){}if(!$('#balGross').value)$('#balGross').value='5810135002';renderBalance();}
+function renderBalance(){
+  if(!$('#balGross'))return;const m=balanceMetrics(),hasCore=(m.gross!==0&&(m.payout!==0||m.actual!==0)),balanced=hasCore&&Math.abs(m.variance)<=m.tolerance;
+  $('#bkGross').textContent=money(m.gross);$('#bkDeductions').textContent=money(m.fee+m.refund);$('#bkNet').textContent=money(m.net);$('#bkOpening').textContent=money(m.opening);$('#bkExpected').textContent=money(m.expected);$('#bkActual').textContent=money(m.actual);
+  $('#flowGross').textContent=money(m.gross);$('#flowDeduct').textContent=money(m.fee+m.refund);$('#flowNet').textContent=money(m.net);$('#flowFunds').textContent=money(m.opening+m.net+m.credit-m.debit);$('#flowPayout').textContent=money(m.payout);$('#flowExpected').textContent=money(m.expected);$('#flowVariance').textContent=money(m.variance);
+  $('#bExecNet').textContent=money(m.net);$('#bExecClosing').textContent=money(m.actual);$('#bExecVariance').textContent=money(m.variance);$('#bExecVariance').className=balanced?'accent':hasCore?'red':'';
+  const badge=$('#balStatusBadge'),big=$('#balStatusBig'),vb=$('#balVarianceBig'),node=$('#flowVarianceNode');node.classList.remove('good','bad');
+  if(!hasCore){badge.textContent='WAITING';badge.className='badge warn';big.textContent='MENUNGGU INPUT';big.className='balanceState wait';vb.className='varianceBig';$('#bExecStatus').textContent='MENUNGGU';$('#bExecStatus').className='amber';$('#bExecStatusMeta').textContent='Lengkapi input utama';$('#balProgress').style.width='0%';$('#balVarianceRatio').textContent='Variance ratio: —';}
+  else if(balanced){badge.textContent='BALANCED';badge.className='badge good';big.textContent='BALANCED';big.className='balanceState good';vb.className='varianceBig good';$('#bExecStatus').textContent='BALANCED';$('#bExecStatus').className='accent';$('#bExecStatusMeta').textContent=`Dalam toleransi ${money(m.tolerance)}`;$('#balProgress').style.width='100%';node.classList.add('good');$('#balVarianceRatio').textContent=`Variance ratio: ${Number.isFinite(m.ratio)?pct(m.ratio):'—'} • PASS ≤ ${money(m.tolerance)}`;}
+  else{badge.textContent='MISMATCH';badge.className='badge red';big.textContent='MISMATCH';big.className='balanceState bad';vb.className='varianceBig bad';$('#bExecStatus').textContent='MISMATCH';$('#bExecStatus').className='red';$('#bExecStatusMeta').textContent=`Selisih di atas toleransi ${money(m.tolerance)}`;const score=Number.isFinite(m.ratio)?clamp(100-(m.ratio*10000),8,96):20;$('#balProgress').style.width=score+'%';node.classList.add('bad');$('#balVarianceRatio').textContent=`Variance ratio: ${Number.isFinite(m.ratio)?pct(m.ratio):'—'} • target ≤ ${money(m.tolerance)}`;}
+  vb.textContent=money(m.variance);let direction='';if(m.variance>m.tolerance)direction='Expected closing lebih besar dari saldo aktual: cek payout yang belum tercatat, saldo akhir kurang, atau debit/fee yang belum dimasukkan.';else if(m.variance<-m.tolerance)direction='Saldo aktual lebih besar dari expected: cek credit/inflow, opening balance, atau payout yang mungkin terlalu besar dicatat.';else direction='Ledger sudah seimbang dalam toleransi aktif.';$('#balStatusText').innerHTML=`<b>Expected:</b> ${money(m.expected)} &nbsp; • &nbsp; <b>Actual:</b> ${money(m.actual)}<br>${escapeHtml(direction)}`;const sug=$('#balSuggestion');if(sug){if(!hasCore)sug.textContent='Saran rekonsiliasi akan muncul setelah payout atau saldo akhir diisi.';else if(balanced)sug.innerHTML='<b>Audit suggestion:</b> Tidak diperlukan adjustment tambahan berdasarkan angka saat ini.';else if(m.variance>0)sug.innerHTML=`<b>Audit suggestion:</b> Selisih ${money(Math.abs(m.variance))}. Jika benar ada potongan/withdraw provider yang belum dicatat, nominal tersebut adalah kandidat <b>debit/payout tambahan</b>. Verifikasi ke evidence sebelum memasukkannya.`;else sug.innerHTML=`<b>Audit suggestion:</b> Selisih ${money(Math.abs(m.variance))}. Jika benar ada dana masuk/koreksi provider yang belum dicatat, nominal tersebut adalah kandidat <b>credit/opening balance tambahan</b>. Verifikasi ke evidence sebelum memasukkannya.`;}
+  $('#balanceExecutiveBrief').innerHTML=`<b>Balance brief:</b> Net transaction <b>${money(m.net)}</b>, payout <b>${money(m.payout)}</b>, expected closing <b>${money(m.expected)}</b>, actual closing <b>${money(m.actual)}</b>. ${balanced?'Variance berada dalam toleransi dan ledger PASS.':hasCore?`Perlu investigasi variance <b>${money(m.variance)}</b>.`:'Lengkapi payout dan saldo akhir untuk menguji balance.'}`;
+  saveBalance();
+}
+function balanceRows(){return (state.filtered&&state.filtered.length)?state.filtered:state.rows||[]}
+function pullTotalsFromCutoff(){const rows=balanceRows();if(!rows.length){toast('Belum ada data transaksi di workspace Cutoff');return}$('#balGross').value=String(rows.reduce((s,x)=>s+(x.amount||0),0));$('#balFee').value=String(rows.reduce((s,x)=>s+(x.fee||0),0));renderBalance();refreshBalanceBatchOptions();toast(`${num(rows.length)} transaksi Cutoff ditarik ke Balance`)}
+function getBatchAllocation(date){const rows=balanceRows(),m=state.selectedMinute;if(!date||!rows.length)return null;const start=CORE.dateAt(CORE.addDaysYMD(date,-1),m),mid=CORE.dateAt(date,0),end=CORE.dateAt(date,m),nextMid=CORE.dateAt(CORE.addDaysYMD(date,1),0);const seg=(a,b)=>{const r=rows.filter(x=>x.ts>=a&&x.ts<b);return {count:r.length,gross:r.reduce((s,x)=>s+x.amount,0),fee:r.reduce((s,x)=>s+x.fee,0),net:r.reduce((s,x)=>s+x.total,0)}};return {date,start,end,carryIn:seg(start,mid),before:seg(mid,end),carryOut:seg(end,nextMid)};}
+function refreshBalanceBatchOptions(){if(!$('#balBatchDate'))return;const rows=balanceRows(),m=state.selectedMinute,batches=CORE.aggregateBatches(rows,m),sel=$('#balBatchDate'),prev=sel.value;const opts=batches.map(b=>`<option value="${b.date}">${b.date} • ${money(b.total)}</option>`).join('');sel.innerHTML=opts||'<option value="">Belum ada data Cutoff</option>';if(prev&&batches.some(b=>b.date===prev))sel.value=prev;else if(batches.length)sel.value=batches.at(-1).date;$('#balCutoffBadge').textContent=fmtMin(m);renderBalanceAllocation();}
+function renderBalanceAllocation(){if(!$('#balBatchDate'))return;const date=$('#balBatchDate').value,a=getBatchAllocation(date);if(!a){$('#balCarryIn').textContent=$('#balBeforeCutoff').textContent=$('#balBatchNet').textContent=$('#balCarryOut').textContent='Rp0';$('#balBatchWindow').textContent='Upload data transaksi di Workspace 01.';$('#balAllocationAudit').textContent='Cutoff allocation akan aktif setelah data transaksi tersedia.';return}const batchGross=a.carryIn.gross+a.before.gross,batchFee=a.carryIn.fee+a.before.fee,batchNet=a.carryIn.net+a.before.net;$('#balCarryIn').textContent=money(a.carryIn.net);$('#balBeforeCutoff').textContent=money(a.before.net);$('#balBatchNet').textContent=money(batchNet);$('#balCarryOut').textContent=money(a.carryOut.net);$('#balBatchWindow').textContent=`${fmtDT(a.start)} → ${fmtDT(a.end)} • cutoff ${fmtMin(state.selectedMinute)}`;$('#balAllocationAudit').innerHTML=`Batch <b>${date}</b>: Gross ${money(batchGross)} • Fee ${money(batchFee)} • Net ${money(batchNet)} • ${num(a.carryIn.count+a.before.count)} transaksi. Carry-out ${money(a.carryOut.net)} masuk batch berikutnya.`;}
+function useSelectedBalanceBatch(){const date=$('#balBatchDate').value,a=getBatchAllocation(date);if(!a){toast('Belum ada batch Cutoff yang dapat dipakai');return}const gross=a.carryIn.gross+a.before.gross,fee=a.carryIn.fee+a.before.fee;$('#balGross').value=String(gross);$('#balFee').value=String(fee);renderBalance();toast(`Batch ${date} digunakan sebagai basis Balance`)}
+function resetBalance(){if(!confirm('Reset semua input Balance & Settlement?'))return;for(const id of BALANCE_NUMERIC_IDS)$('#'+id).value=id==='balGross'?'5810135002':id==='balTolerance'?'1':'0';$('#balNote').value='Omzet kontrol';try{localStorage.removeItem('qrisBalanceV42')}catch(e){}renderBalance();toast('Balance direset')}
+function zeroManualBalance(){['balFee','balRefund','balOpenAvailable','balOpenUnsettled','balCredit','balDebit','balPayout','balCloseAvailable','balCloseUnsettled'].forEach(id=>$('#'+id).value='0');renderBalance();toast('Angka manual dikosongkan')}
+function exportBalance(){const m=balanceMetrics(),date=$('#balBatchDate')?.value||'',a=getBatchAllocation(date),stamp=new Date().toISOString().slice(0,19).replace(/[:T]/g,'-'),rows=[['DDT QRIS Intelligence V4.2 — Balance & Settlement'],['Generated At WIB',new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Jakarta',dateStyle:'short',timeStyle:'medium'}).format(new Date())],['Note',$('#balNote').value||''],[],['Gross Omzet',m.gross],['Total Fee',m.fee],['Refund/Reversal',m.refund],['Net Transaction',m.net],['Opening Available',m.openAvailable],['Opening Unsettled',m.openUnsettled],['Adjustment Credit',m.credit],['Adjustment Debit',m.debit],['Total Pencairan',m.payout],['Expected Closing',m.expected],['Closing Available',m.closeAvailable],['Closing Unsettled',m.closeUnsettled],['Actual Closing',m.actual],['Variance',m.variance],['Tolerance',m.tolerance],['Status',Math.abs(m.variance)<=m.tolerance?'BALANCED':'MISMATCH']];const alloc=[['Batch Date','Cutoff','Window Start','Window End','Carry In Net','Before Cutoff Net','Batch Net','Carry Out Net']];if(a)alloc.push([date,fmtMin(state.selectedMinute),fmtDT(a.start),fmtDT(a.end),a.carryIn.net,a.before.net,a.carryIn.net+a.before.net,a.carryOut.net]);if(window.XLSX){const wb=XLSX.utils.book_new(),ws1=XLSX.utils.aoa_to_sheet(rows),ws2=XLSX.utils.aoa_to_sheet(alloc);ws1['!cols']=[{wch:28},{wch:24}];ws2['!cols']=Array(8).fill({wch:20});XLSX.utils.book_append_sheet(wb,ws1,'Balance_Summary');XLSX.utils.book_append_sheet(wb,ws2,'Cutoff_Allocation');XLSX.writeFile(wb,`QRIS_Balance_Settlement_${stamp}.xlsx`);toast('Excel Balance berhasil dibuat');return}const csv=rows.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');downloadBlob(new Blob([csv],{type:'text/csv;charset=utf-8'}),`QRIS_Balance_Settlement_${stamp}.csv`);toast('CSV Balance berhasil dibuat')}
+
+$$('.balanceInput').forEach(el=>el.addEventListener('input',()=>{clearTimeout(window.__bal);window.__bal=setTimeout(renderBalance,80)}));
+$('#balBatchDate').addEventListener('change',renderBalanceAllocation);$('#btnBalancePull').onclick=pullTotalsFromCutoff;$('#btnBalanceUseBatch').onclick=useSelectedBalanceBatch;$('#btnBalanceZero').onclick=zeroManualBalance;$('#btnBalancePullTop').onclick=pullTotalsFromCutoff;$('#btnBalanceResetTop').onclick=resetBalance;$('#btnBalanceExportTop').onclick=exportBalance;
+loadBalance();refreshBalanceBatchOptions();
+
+function switchWorkspace(mode,save=true){
+  if(!['cutoff','recon','balance'].includes(mode))mode='cutoff';
+  $('#cutoffPanel').classList.toggle('active',mode==='cutoff');$('#reconPanel').classList.toggle('active',mode==='recon');$('#balancePanel').classList.toggle('active',mode==='balance');
+  $$('.workspaceBtn').forEach(b=>b.classList.toggle('active',b.dataset.workspace===mode));
+  $('#cutoffTopActions').classList.toggle('hidden',mode!=='cutoff');$('#reconTopContext').classList.toggle('hidden',mode!=='recon');$('#balanceTopActions').classList.toggle('hidden',mode!=='balance');
+  document.documentElement.dataset.workspace=mode;
+  if($('#liveWorkspaceLabel'))$('#liveWorkspaceLabel').textContent=mode==='recon'?'Reconciliation workspace':mode==='balance'?'Balance workspace':'Cutoff workspace';
+  if(save){try{localStorage.setItem('qrisWorkspaceV4',mode)}catch(e){}}
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(mode==='cutoff')setTimeout(()=>{drawTraffic();drawCompare()},80);
+  if(mode==='balance')setTimeout(()=>{refreshBalanceBatchOptions();renderBalance()},40);
+}
+$$('.workspaceBtn').forEach(b=>b.addEventListener('click',()=>switchWorkspace(b.dataset.workspace)));
+let initialWorkspace='cutoff';try{initialWorkspace=localStorage.getItem('qrisWorkspaceV4')||'cutoff'}catch(e){}switchWorkspace(initialWorkspace,false);
+
+
+startLiveClock();
+window.addEventListener('keydown',e=>{if(!e.altKey)return;const k=String(e.key).toLowerCase();if(k==='1'){e.preventDefault();switchWorkspace('cutoff')}else if(k==='2'){e.preventDefault();switchWorkspace('recon')}else if(k==='3'){e.preventDefault();switchWorkspace('balance')}else if(k==='e'){e.preventDefault();const w=document.documentElement.dataset.workspace;w==='recon'?exportReconciliation():w==='balance'?exportBalance():exportExcel()}});
+const floatingTop=$('#floatingTop');window.addEventListener('scroll',()=>floatingTop?.classList.toggle('show',window.scrollY>620),{passive:true});if(floatingTop)floatingTop.onclick=()=>window.scrollTo({top:0,behavior:'smooth'});
+syncExecutiveRecon();
+loadObs();renderAll();
+
+</script>
+</body></html>
