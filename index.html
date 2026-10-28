@@ -973,6 +973,12 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;bac
     <section class="section" id="generator">
       <div class="generator-layout">
         <div class="generator-work">
+      <div class="card" style="margin-bottom:16px;border:1px solid #226b88;padding:16px">
+        <h2 style="margin:0 0 8px">◉ V45 • TOTOMACAU 4D — PEMBACA GAMBAR</h2>
+        <div class="hint">Sumber: poolstotomacao.com · PAGI 00:00 · SIANG 13:00 · SORE 16:00 · MALAM I 19:00 · MALAM II 22:00 · MALAM III 23:00 (WIB). Hasil tidak akan diinput bila tanggal/jam sumber belum terverifikasi.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn primary" onclick="checkTotomacaoV45()">↻ Periksa Gambar TOTOMACAU</button><span id="totomacaoV45Status" class="hint">Belum diperiksa.</span></div>
+        <div id="totomacaoV45Results" style="margin-top:10px;white-space:pre-wrap;font-size:12px"></div>
+      </div>
       <div class="card auto-result-panel">
         <div class="auto-result-head">
           <div>
@@ -2586,11 +2592,37 @@ async function runAutoResultSync(force=false){
   autoResultBusy=false;
 }
 function autoResultTick(){
-  if(autoResultEnabled)runAutoResultSync(false);
+  if(autoResultEnabled){runAutoResultSync(false);checkTotomacaoV45();}
 }
-setTimeout(()=>runAutoResultSync(false),2500);
+setTimeout(()=>{runAutoResultSync(false);if(autoResultEnabled)checkTotomacaoV45()},2500);
 setInterval(autoResultTick,AUTO_RESULT_INTERVAL);
 
+// V45 image result inspector. Read-only until upstream draw timestamp is verified.
+async function checkTotomacaoV45(){
+  const status=document.getElementById('totomacaoV45Status'),out=document.getElementById('totomacaoV45Results');
+  if(!status||!out)return;
+  status.textContent='Memeriksa website sumber…';out.textContent='';
+  try{
+    const r=await fetch('/api/totomacao',{cache:'no-store'});
+    const data=await r.json();
+    if(!r.ok||!data.ok)throw Error(data.error||'Gagal membaca sumber');
+    const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jakarta',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+    const slots=[['TOTOMACAU PAGI','00:00'],['TOTOMACAU SIANG','13:00'],['TOTOMACAU SORE','16:00'],['TOTOMACAU MALAM I','19:00'],['TOTOMACAU MALAM II','22:00'],['TOTOMACAU MALAM III','23:00']];
+    let inserted=0;
+    const lines=slots.map(([name,clock])=>{
+      const matched=(data.candidates||[]).filter(x=>x.date===today&&x.time&&Math.abs((+x.time.slice(0,2)*60 + +x.time.slice(3,5))-(+clock.slice(0,2)*60 + +clock.slice(3,5)))<=15);
+      if(matched.length===1 && autoResultEnabled && !hasResultToday(name)){
+        const row={date:matched[0].date,time:matched[0].time,values:[matched[0].number]};
+        const report=makeAutoReport(name,row);
+        if(report && addAutoDailyHistory(name,report,row))inserted++;
+      }
+      return `${name} (${clock} WIB): ${matched.length===1?matched[0].number+' — tanggal/jam terverifikasi':'Belum ada hasil terverifikasi'}`;
+    });
+    out.textContent=lines.join('\n')+'\n\n'+(data.message||'')+'\nKandidat gambar ditemukan: '+(data.candidates||[]).length+'. Mode aman: tidak menginput hasil tanpa bukti tanggal dan jam.';
+    if(inserted)renderDailyHistory();
+    status.textContent='Selesai • '+inserted+' hasil baru tersimpan • '+new Date().toLocaleTimeString('id-ID',{timeZone:'Asia/Jakarta'})+' WIB';
+  }catch(e){status.textContent='Gagal: '+e.message;out.textContent='Tidak ada hasil yang diinput.'}
+}
 function updateClock(){const d=new Date();document.getElementById('liveTime').textContent=d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});document.getElementById('liveDate').textContent=`${hari[d.getDay()]}, ${String(d.getDate()).padStart(2,'0')} ${bulan[d.getMonth()]} ${d.getFullYear()}`;const stored=localStorage.getItem('workdash_daily_history');if(stored){try{if(JSON.parse(stored).day!==localDayKey()){clearDailyHistory(false)}}catch{}}renderMarketStatus();checkBetClosedNotifications(d);checkPredictionDay()}
 function generateFromRaw(){
   const raw=document.getElementById('rawInput').value.trim();
