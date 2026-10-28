@@ -1,0 +1,1 @@
+V45.4 diagnostic build: records HTML image tag details to identify extra fifth ball. Does NOT force auto insertion. Source site could not be accessed from build environment. Open /api/totomacao and inspect debug.
