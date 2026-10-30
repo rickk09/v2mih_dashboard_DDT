@@ -19,10 +19,38 @@ async function fetchSource(){
  if(data?.success!==true||!row||typeof row!=='object'||!row.drawingTime||!['price1','price2','price3'].every(k=>row[k]!==undefined))throw Object.assign(Error('Unexpected Huahin JSON'),{diagnostics});
  return {row,diagnostics};
 }
-function mapResult(row,date){const results={};if(row.drawingTime===date+' 16:30:00'&&[row.price1,row.price2,row.price3].every(validPrize)){
- const [p1,p2,p3]=[row.price1,row.price2,row.price3].map(s=>s.slice(-4));
- results['HUAHIN 1630']={p1,p2,p3,number1:p1,number2:p2,number3:p3,sourceDate:date,sourceTime:'16:30',drawTime:row.drawingTime,period:String(row.code||''),dashboardTime:'16:30'};
- }return results;}
+
+function mapResult(row, date) {
+  const results = {};
+
+  if (!row || !row.drawingTime) return results;
+
+  const prizes = [row.price1, row.price2, row.price3];
+
+  if (!prizes.every(validPrize)) return results;
+
+  for (const session of SESSIONS) {
+    const expectedTime = date + ' ' + session.source + ':00';
+
+    if (row.drawingTime !== expectedTime) continue;
+
+    const [p1, p2, p3] = prizes.map(s => s.slice(-4));
+
+    results[session.market] = {
+      p1, p2, p3,
+      number1: p1,
+      number2: p2,
+      number3: p3,
+      sourceDate: date,
+      sourceTime: session.source,
+      drawTime: row.drawingTime,
+      period: String(row.code || ''),
+      dashboardTime: session.dashboard
+    };
+  }
+
+  return results;
+}
 async function init(db){await db.prepare('CREATE TABLE IF NOT EXISTS huahin_live_results (draw_date TEXT NOT NULL, market TEXT NOT NULL, prize1 TEXT NOT NULL, prize2 TEXT NOT NULL, prize3 TEXT NOT NULL, source_time TEXT NOT NULL, period TEXT, updated_at TEXT NOT NULL, PRIMARY KEY(draw_date,market))').run()}
 async function admin(request,secret){if(!secret)return false;let c='';try{c=decodeURIComponent((request.headers.get('cookie')||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('ddt_admin='))?.slice(10)||'')}catch{return false}const p=c.split('.');if(p.length!==3||p[0]!=='admin'||!Number.isFinite(+p[1])||+p[1]<Date.now()/1000)return false;const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign']);const sig=[...new Uint8Array(await crypto.subtle.sign('HMAC',key,new TextEncoder().encode('admin.'+p[1])))].map(x=>x.toString(16).padStart(2,'0')).join('');return sig.length===p[2].length&&[...sig].reduce((a,x,i)=>a|(x.charCodeAt(0)^p[2].charCodeAt(i)),0)===0}
 export async function onRequestGet({request,env}){try{const u=new URL(request.url),date=u.searchParams.get('date')||dateWIB();if(!validDate(date))return json({ok:false,error:'Invalid date'},400);if(u.searchParams.get('diagnose')==='1'){const {row:raw,diagnostics}=await fetchSource();return json({ok:true,date,source:SOURCE_URL,diagnostics,sourceDrawingTime:raw.drawingTime,sourcePeriod:raw.code,results:mapResult(raw,date),sessions:SESSIONS,notes:'Read-only. Latest-result API. Only HUAHIN 1630 confirmed. Six digits trimmed to final four; other sessions need historical API.'});}if(!env.DB)return json({ok:false,error:'D1 DB binding missing'},503);await init(env.DB);const r=await env.DB.prepare('SELECT market,prize1,prize2,prize3,source_time,period FROM huahin_live_results WHERE draw_date=?').bind(date).all();return json({ok:true,date,results:Object.fromEntries((r.results||[]).map(x=>[x.market,{p1:x.prize1,p2:x.prize2,p3:x.prize3,sourceTime:x.source_time,period:x.period}]))});}catch(e){return json({ok:false,error:String(e?.message||e),diagnostics:e?.diagnostics||null},502)}}
