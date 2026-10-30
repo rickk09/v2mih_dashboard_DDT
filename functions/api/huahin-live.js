@@ -1,7 +1,11 @@
 const HEAD={'content-type':'application/json; charset=utf-8','cache-control':'no-store'};
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:HEAD});
 const SOURCE_URL='https://huahinlottery.com/hua/lottery-live-draw/lottery/api/getHUARecords?name=HUA';
-const SESSIONS=[{market:'HUAHIN 0100',source:null,dashboard:'01:00'},{market:'HUAHIN 1630',source:'16:30',dashboard:'16:30'},{market:'HUAHIN 2100',source:null,dashboard:'21:00'}];
+const SESSIONS = [
+  { market: 'HUAHIN 0100', source: '01:00', dashboard: '01:00' },
+  { market: 'HUAHIN 1630', source: '16:30', dashboard: '16:30' },
+  { market: 'HUAHIN 2100', source: '21:00', dashboard: '21:00' }
+];
 const dateWIB=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jakarta',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const validDate=s=>/^20\d\d-\d\d-\d\d$/.test(s)&&!Number.isNaN(Date.parse(s+'T00:00:00Z'));
 const validPrize=s=>typeof s==='string'&&/^\d{6}$/.test(s);
