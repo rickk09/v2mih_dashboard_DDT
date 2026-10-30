@@ -1,12 +1,11 @@
 
 function parse(html, sourceDate) {
   const text = plain(html);
-
-  const digitPattern = '([0-9](?:\\s*[-–]\\s*[0-9]){3})';
   const found = {};
 
-  // Cari blok Pick 4 yang benar-benar berisi
-  // hasil Midday dan Evening, bukan teks navigasi.
+  const digitPattern =
+    '([0-9]{4}|[0-9](?:\\s*[-– ]\\s*[0-9]){3})';
+
   const headings = [...text.matchAll(/\bPick\s*4\b/gi)];
 
   for (const heading of headings) {
@@ -15,48 +14,41 @@ function parse(html, sourceDate) {
       heading.index + 1200
     );
 
-    const mid = section.match(
-      new RegExp('\\bMidday\\s*[:–-]?\\s*' + digitPattern, 'i')
-    );
+    for (const [market, label] of [
+      ['KENTUCKYMID', 'Midday'],
+      ['KENTUCKYEVE', 'Evening']
+    ]) {
+      const pattern = new RegExp(
+        '\\b' + label + '\\s*[:–-]?\\s*' + digitPattern,
+        'i'
+      );
 
-    const eve = section.match(
-      new RegExp('\\bEvening\\s*[:–-]?\\s*' + digitPattern, 'i')
-    );
+      const match = section.match(pattern);
+      if (!match) continue;
 
-    if (!mid || !eve) continue;
+      const number = match[1].replace(/\D/g, '');
 
-    const midday = mid[1].replace(/\D/g, '');
-    const evening = eve[1].replace(/\D/g, '');
+      if (!/^\d{4}$/.test(number)) continue;
 
-    if (!/^\d{4}$/.test(midday) ||
-        !/^\d{4}$/.test(evening)) {
-      continue;
+      found[market] = {
+        number,
+        sourceDate,
+        sourceTime: label,
+        drawId: 'archive-' + sourceDate + '-' +
+          label.toLowerCase()
+      };
     }
 
-    found.KENTUCKYMID = {
-      number: midday,
-      sourceDate,
-      sourceTime: 'Midday',
-      drawId: 'archive-' + sourceDate + '-midday'
-    };
-
-    found.KENTUCKYEVE = {
-      number: evening,
-      sourceDate,
-      sourceTime: 'Evening',
-      drawId: 'archive-' + sourceDate + '-evening'
-    };
-
-    break;
+    if (Object.keys(found).length === 2) break;
   }
 
-  if (!found.KENTUCKYMID || !found.KENTUCKYEVE) {
+  if (!Object.keys(found).length) {
     throw Object.assign(
       Error('Kentucky Pick 4 results not found in page'),
       {
         details: {
           sourceDate,
-          preview: text.slice(0, 600)
+          preview: text.slice(0, 1000)
         }
       }
     );
