@@ -329,25 +329,23 @@ export async function onRequestPost({ request, env }) {
           unchanged++;
         }
         continue;
-      }
-
-      const result = await env.DB.prepare(`
-        INSERT OR IGNORE INTO kentucky_live_results
-        (
-          draw_date, market, source_date,
-          source_time, draw_id, number, created_at
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-      `).bind(
-        date,
-        market,
-        item.sourceDate,
-        item.sourceTime,
-        item.drawId,
-        item.number,
-        new Date().toISOString()
-      ).run();
-
+      }       
+const result = await env.DB.prepare(`
+  INSERT OR IGNORE INTO kentucky_live_results
+    source_time, draw_id, number,
+    updated_at, created_at
+  )
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+`).bind(
+  date,
+  market,
+  item.sourceDate,
+  item.sourceTime,
+  item.drawId,
+  item.number,
+  new Date().toISOString(),
+  new Date().toISOString()
+).run();
       if (result.meta?.changes) inserted++;
     }
 
