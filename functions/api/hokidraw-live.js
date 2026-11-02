@@ -9,7 +9,19 @@ async function authorized(req,secret){if(!secret)return false;const c=(req.heade
 async function fetchVerified(date){
  const start=Date.parse(date+'T00:00:00+07:00');if(!Number.isFinite(start))throw Error('Tanggal tidak valid');
  const url=API+'?gameId=3&startTime='+start+'&endTime='+(start+86400000-1000);
- const r=await fetch(url,{method:'POST',headers:{'accept':'application/json','content-type':'application/x-www-form-urlencoded; charset=UTF-8','origin':'https://www.hokidraw.com','referer':'https://www.hokidraw.com/live-draw.html'},body:'',redirect:'follow',cf:{cacheTtl:0}});
+ 
+const r = await fetch(url, {
+  method: 'POST',
+  headers: {
+    'accept': 'application/json, text/javascript, */*; q=0.01',
+    'content-type': 'application/x-www-form-urlencoded',
+    'origin': 'https://www.hokidraw.com',
+    'referer': 'https://www.hokidraw.com/live-draw.html'
+  },
+  body: '',
+  redirect: 'follow',
+  cf: { cacheTtl: 0 }
+});
  if(!r.ok)throw Error('HOKIDRAW upstream HTTP '+r.status);
  const obj=await r.json();if(String(obj?.code)!=='0'||!Array.isArray(obj.data))throw Error('Respons riwayat HOKIDRAW tidak valid');
  const now=jakartaNow(),out=new Map();
