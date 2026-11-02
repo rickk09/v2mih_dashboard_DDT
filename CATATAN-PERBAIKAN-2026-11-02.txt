@@ -1,0 +1,5 @@
+Paket berdasarkan ZIP GitHub commit 270a80a.
+Perubahan: sinkronisasi manual kini memberi pesan bila proses sebelumnya masih berjalan; menghapus pemanggilan eval dinamis untuk pull API; refresh tampilan sesudah siklus sync selesai; memberi umpan balik setelah sync manual.
+Tombol simpan jadwal, penyimpanan localStorage, dan antrean push D1 sudah ada pada sumber asli dan dipertahankan.
+PENTING: HTTP 503/405 dari server eksternal tidak bisa dijamin hilang melalui perubahan frontend. Angka yang tidak terverifikasi tidak diisi. Periksa respons POST dan GET serta diagnostik upstream, D1 binding DB dan secret ADMIN_PASSWORD.
+Unggah seluruh isi folder ini ke root repository, jangan unggah folder pembungkusnya.
