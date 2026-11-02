@@ -22,7 +22,19 @@ const r = await fetch(url, {
   redirect: 'follow',
   cf: { cacheTtl: 0 }
 });
- if(!r.ok)throw Error('HOKIDRAW upstream HTTP '+r.status);
+ if (!r.ok) {
+  console.error('HOKIDRAW UPSTREAM ERROR', JSON.stringify({
+    status: r.status,
+    statusText: r.statusText,
+    url: r.url,
+    contentType: r.headers.get('content-type'),
+    server: r.headers.get('server'),
+    cfRay: r.headers.get('cf-ray'),
+    bodyPreview: (await r.text()).slice(0, 500)
+  }));
+
+  throw Error('HOKIDRAW upstream HTTP ' + r.status);
+}
  const obj=await r.json();if(String(obj?.code)!=='0'||!Array.isArray(obj.data))throw Error('Respons riwayat HOKIDRAW tidak valid');
  const now=jakartaNow(),out=new Map();
  for(const rec of obj.data){
