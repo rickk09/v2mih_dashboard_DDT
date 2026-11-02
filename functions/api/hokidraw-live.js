@@ -1,76 +1,631 @@
-// V46.2: verified HOKIDRAW first-prize 5D -> last 4 digits, persisted in D1.
-const HEAD={'content-type':'application/json; charset=utf-8','cache-control':'no-store'};
-const respond=(x,s=200)=>new Response(JSON.stringify(x),{status:s,headers:HEAD});
-const API='https://www.hokidraw.com/api/livelottery-watchprize/games/getHistory';
-const pad=n=>String(n).padStart(2,'0');
-function jakartaNow(){const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Jakarta',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(new Date());const x=Object.fromEntries(parts.map(p=>[p.type,p.value]));return {date:`${x.year}-${x.month}-${x.day}`,time:`${x.hour}:${x.minute}:${x.second}`}}
-async function init(db){await db.prepare('CREATE TABLE IF NOT EXISTS hokidraw_live_results (draw_date TEXT NOT NULL, market TEXT NOT NULL, draw_time TEXT NOT NULL, number TEXT NOT NULL, original_five TEXT NOT NULL, session_period TEXT NOT NULL, created_at TEXT NOT NULL, PRIMARY KEY(draw_date,market))').run()}
-async function authorized(req,secret){if(!secret)return false;const c=(req.headers.get('cookie')||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('ddt_admin='));if(!c)return false;let parts;try{parts=decodeURIComponent(c.slice(10)).split('.')}catch{return false}if(parts.length!==3||parts[0]!=='admin'||!Number.isFinite(Number(parts[1]))||Number(parts[1])<Date.now()/1000)return false;const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign']);const sig=[...new Uint8Array(await crypto.subtle.sign('HMAC',k,new TextEncoder().encode('admin.'+parts[1])))].map(x=>x.toString(16).padStart(2,'0')).join('');return sig.length===parts[2].length&&[...sig].reduce((d,c,i)=>d|(c.charCodeAt(0)^parts[2].charCodeAt(i)),0)===0}
-async function fetchVerified(date){
- const start=Date.parse(date+'T00:00:00+07:00');if(!Number.isFinite(start))throw Error('Tanggal tidak valid');
- const url=API+'?gameId=3&startTime='+start+'&endTime='+(start+86400000-1000);
- 
-const r = await fetch(url, {
-  method: 'POST',
-  headers: {
-    'accept': 'application/json, text/javascript, */*; q=0.01',
-    'content-type': 'application/x-www-form-urlencoded',
-    'origin': 'https://www.hokidraw.com',
-    'referer': 'https://www.hokidraw.com/live-draw.html'
-  },
-  body: '',
-  redirect: 'follow',
-  cf: { cacheTtl: 0 }
-});
- if (!r.ok) {
-  console.error('HOKIDRAW UPSTREAM ERROR', JSON.stringify({
-    status: r.status,
-    statusText: r.statusText,
-    url: r.url,
-    contentType: r.headers.get('content-type'),
-    server: r.headers.get('server'),
-    cfRay: r.headers.get('cf-ray'),
-    bodyPreview: (await r.text()).slice(0, 500)
-  }));
 
-  throw Error('HOKIDRAW upstream HTTP ' + r.status);
+// V46.3 - HOKIDRAW LIVE RESULT
+// Cloudflare Pages Functions + D1
+// Verified 5D first prize -> last 4 digits
+// Includes upstream diagnostics and safe D1 persistence.
+
+const HEAD = {
+  'content-type': 'application/json; charset=utf-8',
+  'cache-control': 'no-store'
+};
+
+const respond = (data, status = 200) =>
+  new Response(JSON.stringify(data), {
+    status,
+    headers: HEAD
+  });
+
+const API =
+  'https://www.hokidraw.com/api/livelottery-watchprize/games/getHistory';
+
+function jakartaNow() {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Jakarta',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23'
+  }).formatToParts(new Date());
+
+  const x = Object.fromEntries(
+    parts.map(p => [p.type, p.value])
+  );
+
+  return {
+    date: `${x.year}-${x.month}-${x.day}`,
+    time: `${x.hour}:${x.minute}:${x.second}`,
+    timestamp:
+      `${x.year}-${x.month}-${x.day} ` +
+      `${x.hour}:${x.minute}:${x.second}`
+  };
 }
- const obj=await r.json();if(String(obj?.code)!=='0'||!Array.isArray(obj.data))throw Error('Respons riwayat HOKIDRAW tidak valid');
- const now=jakartaNow(),out=new Map();
- for(const rec of obj.data){
-  if(String(rec?.state)!=='8'&&String(rec?.stateName||'').toLowerCase()!=='finish')continue;
-  const stamp=String(rec.presetTime||'');const m=/^(20\d{2}-\d{2}-\d{2}) (\d{2}):00:00$/.exec(stamp);
-  if(!m||m[1]!==date||Number(m[2])>23)continue;
-  if(stamp>now.date+' '+now.time)continue;
-  const winners=Array.isArray(rec.wins)?rec.wins.filter(w=>Number(w?.winBatch)===1):[];
-  if(winners.length!==1)continue;
-  const raw=String(winners[0].winNo??'');if(!/^\d{5}$/.test(raw))continue;
-  const period=String(rec.sessionPeriod??'');if(!/^\d+$/.test(period))continue;
-  const market='HOKIDRAW '+m[2]+':00',entry={market,date,time:m[2]+':00:00',number:raw.slice(-4),originalFive:raw,sessionPeriod:period};
-  if(out.has(market)){const prev=out.get(market);if(prev.number!==entry.number||prev.sessionPeriod!==period)throw Error('Konflik dua hasil sumber untuk '+market)}
-  out.set(market,entry);
- }
- return [...out.values()];
+
+function validDate(date) {
+  if (!/^20\d{2}-\d{2}-\d{2}$/.test(date)) return false;
+
+  const d = new Date(date + 'T00:00:00Z');
+
+  return (
+    !Number.isNaN(d.getTime()) &&
+    d.toISOString().slice(0, 10) === date
+  );
 }
-export async function onRequestGet({request,env}){
- if(!env.DB)return respond({ok:false,error:'D1 DB offline'},503);
- const date=new URL(request.url).searchParams.get('date')||jakartaNow().date;
- if(!/^20\d{2}-\d{2}-\d{2}$/.test(date))return respond({ok:false,error:'Tanggal tidak valid'},400);
- try{await init(env.DB);const r=await env.DB.prepare('SELECT market,draw_time,number,original_five,session_period FROM hokidraw_live_results WHERE draw_date=? ORDER BY draw_time').bind(date).all();return respond({ok:true,date,results:Object.fromEntries((r.results||[]).map(x=>[x.market,{number:x.number,time:x.draw_time,originalFive:x.original_five,sessionPeriod:x.session_period}]))})}catch(e){return respond({ok:false,error:String(e.message||e)},500)}
+
+async function init(db) {
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS hokidraw_live_results (
+      draw_date TEXT NOT NULL,
+      market TEXT NOT NULL,
+      draw_time TEXT NOT NULL,
+      number TEXT NOT NULL,
+      original_five TEXT NOT NULL,
+      session_period TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      PRIMARY KEY(draw_date, market)
+    )
+  `).run();
 }
-export async function onRequestPost({request,env}){
- if(!await authorized(request,env.ADMIN_PASSWORD))return respond({ok:false,error:'Admin login diperlukan'},401);
- if(!env.DB)return respond({ok:false,error:'D1 DB offline'},503);
- const date=jakartaNow().date;let verified;
- try{verified=await fetchVerified(date)}catch(e){return respond({ok:false,error:String(e.message||e)},502)}
- try{
-  await init(env.DB);let inserted=0,unchanged=0;const conflicts=[];
-  for(const v of verified){
-   const old=await env.DB.prepare('SELECT number,session_period FROM hokidraw_live_results WHERE draw_date=? AND market=?').bind(date,v.market).first();
-   if(old){if(old.number!==v.number||old.session_period!==v.sessionPeriod)conflicts.push(v.market);else unchanged++;continue}
-   const r=await env.DB.prepare('INSERT OR IGNORE INTO hokidraw_live_results(draw_date,market,draw_time,number,original_five,session_period,created_at) VALUES(?,?,?,?,?,?,?)').bind(date,v.market,v.time,v.number,v.originalFive,v.sessionPeriod,new Date().toISOString()).run();
-   if(r.meta?.changes)inserted++;
+
+async function authorized(req, secret) {
+  if (!secret) return false;
+
+  const cookie = (req.headers.get('cookie') || '')
+    .split(';')
+    .map(x => x.trim())
+    .find(x => x.startsWith('ddt_admin='));
+
+  if (!cookie) return false;
+
+  let parts;
+
+  try {
+    parts = decodeURIComponent(
+      cookie.slice('ddt_admin='.length)
+    ).split('.');
+  } catch {
+    return false;
   }
-  return respond({ok:true,date,verified:verified.length,inserted,unchanged,conflicts});
- }catch(e){return respond({ok:false,error:String(e.message||e)},500)}
+
+  if (
+    parts.length !== 3 ||
+    parts[0] !== 'admin' ||
+    !Number.isFinite(Number(parts[1])) ||
+    Number(parts[1]) < Date.now() / 1000
+  ) {
+    return false;
+  }
+
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(secret),
+    {
+      name: 'HMAC',
+      hash: 'SHA-256'
+    },
+    false,
+    ['sign']
+  );
+
+  const signature = [
+    ...new Uint8Array(
+      await crypto.subtle.sign(
+        'HMAC',
+        key,
+        new TextEncoder().encode('admin.' + parts[1])
+      )
+    )
+  ]
+    .map(x => x.toString(16).padStart(2, '0'))
+    .join('');
+
+  return (
+    signature.length === parts[2].length &&
+    [...signature].reduce(
+      (difference, character, index) =>
+        difference |
+        (character.charCodeAt(0) ^
+          parts[2].charCodeAt(index)),
+      0
+    ) === 0
+  );
+}
+
+function buildSourceUrl(date) {
+  const start = Date.parse(
+    date + 'T00:00:00+07:00'
+  );
+
+  if (!Number.isFinite(start)) {
+    throw Error('Tanggal tidak valid');
+  }
+
+  const end = start + 86400000 - 1000;
+
+  const url = new URL(API);
+
+  url.searchParams.set('gameId', '3');
+  url.searchParams.set('startTime', String(start));
+  url.searchParams.set('endTime', String(end));
+
+  return url.toString();
+}
+
+async function fetchSource(date) {
+  const url = buildSourceUrl(date);
+
+  let response;
+
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        accept:
+          'application/json, text/javascript, */*; q=0.01',
+        'content-type':
+          'application/x-www-form-urlencoded',
+        origin: 'https://www.hokidraw.com',
+        referer:
+          'https://www.hokidraw.com/live-draw.html'
+      },
+      body: '',
+      redirect: 'follow',
+      signal: AbortSignal.timeout(15000),
+      cf: {
+        cacheTtl: 0
+      }
+    });
+  } catch (error) {
+    const diagnostics = {
+      stage: 'fetch',
+      sourceUrl: url,
+      message: String(error?.message || error),
+      name: String(error?.name || 'Error')
+    };
+
+    console.error(
+      'HOKIDRAW FETCH ERROR',
+      JSON.stringify(diagnostics)
+    );
+
+    throw Object.assign(
+      Error('Gagal menghubungi API HOKIDRAW'),
+      { diagnostics }
+    );
+  }
+
+  const contentType =
+    response.headers.get('content-type') || '';
+
+  const body = await response.text();
+
+  const diagnostics = {
+    stage: 'upstream',
+    sourceUrl: url,
+    finalUrl: response.url,
+    httpStatus: response.status,
+    statusText: response.statusText,
+    contentType,
+    server: response.headers.get('server'),
+    cfRay: response.headers.get('cf-ray'),
+    bodyPreview: body.slice(0, 500)
+  };
+
+  if (!response.ok) {
+    console.error(
+      'HOKIDRAW UPSTREAM ERROR',
+      JSON.stringify(diagnostics)
+    );
+
+    throw Object.assign(
+      Error(
+        'HOKIDRAW upstream HTTP ' +
+        response.status
+      ),
+      { diagnostics }
+    );
+  }
+
+  let obj;
+
+  try {
+    obj = JSON.parse(body);
+  } catch {
+    console.error(
+      'HOKIDRAW INVALID JSON',
+      JSON.stringify(diagnostics)
+    );
+
+    throw Object.assign(
+      Error('API HOKIDRAW tidak mengembalikan JSON'),
+      { diagnostics }
+    );
+  }
+
+  if (
+    String(obj?.code) !== '0' ||
+    !Array.isArray(obj?.data)
+  ) {
+    throw Object.assign(
+      Error('Respons riwayat HOKIDRAW tidak valid'),
+      {
+        diagnostics: {
+          ...diagnostics,
+          apiCode: obj?.code ?? null,
+          apiMessage: obj?.msg ?? null,
+          dataIsArray: Array.isArray(obj?.data)
+        }
+      }
+    );
+  }
+
+  return {
+    data: obj.data,
+    diagnostics: {
+      ...diagnostics,
+      bodyPreview: undefined,
+      apiCode: obj.code,
+      apiMessage: obj.msg,
+      totalRecords: obj.data.length
+    }
+  };
+}
+
+function parseVerified(records, date) {
+  const now = jakartaNow();
+  const results = new Map();
+
+  const stats = {
+    totalRecords: records.length,
+    finishedRecords: 0,
+    matchedDate: 0,
+    validResults: 0,
+    pendingAnnouncement: 0
+  };
+
+  for (const rec of records) {
+    const finished =
+      String(rec?.state) === '8' ||
+      String(rec?.stateName || '')
+        .toLowerCase() === 'finish';
+
+    if (!finished) continue;
+
+    stats.finishedRecords++;
+
+    const stamp = String(rec?.presetTime || '');
+
+    const match =
+      /^(20\d{2}-\d{2}-\d{2}) (\d{2}):00:00$/
+        .exec(stamp);
+
+    if (!match) continue;
+    if (match[1] !== date) continue;
+    if (Number(match[2]) > 23) continue;
+
+    stats.matchedDate++;
+
+    // The source's startTime indicates when the
+    // session result becomes available.
+    // Never publish a result before that time.
+    const announcementTime =
+      String(rec?.startTime || '');
+
+    if (
+      !/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/
+        .test(announcementTime)
+    ) {
+      continue;
+    }
+
+    if (announcementTime > now.timestamp) {
+      stats.pendingAnnouncement++;
+      continue;
+    }
+
+    const winners = Array.isArray(rec?.wins)
+      ? rec.wins.filter(
+          w => Number(w?.winBatch) === 1
+        )
+      : [];
+
+    if (winners.length !== 1) continue;
+
+    const raw = String(
+      winners[0]?.winNo ?? ''
+    );
+
+    if (!/^\d{5}$/.test(raw)) continue;
+
+    const period = String(
+      rec?.sessionPeriod ?? ''
+    );
+
+    if (!/^\d+$/.test(period)) continue;
+
+    const market =
+      'HOKIDRAW ' + match[2] + ':00';
+
+    const entry = {
+      market,
+      date,
+      time: match[2] + ':00:00',
+      number: raw.slice(-4),
+      originalFive: raw,
+      sessionPeriod: period
+    };
+
+    if (results.has(market)) {
+      const previous = results.get(market);
+
+      if (
+        previous.number !== entry.number ||
+        previous.sessionPeriod !== entry.sessionPeriod
+      ) {
+        throw Error(
+          'Konflik dua hasil sumber untuk ' +
+          market
+        );
+      }
+    }
+
+    results.set(market, entry);
+    stats.validResults = results.size;
+  }
+
+  return {
+    verified: [...results.values()],
+    stats
+  };
+}
+
+export async function onRequestGet({
+  request,
+  env
+}) {
+  const url = new URL(request.url);
+
+  const date =
+    url.searchParams.get('date') ||
+    jakartaNow().date;
+
+  if (!validDate(date)) {
+    return respond({
+      ok: false,
+      error: 'Tanggal tidak valid'
+    }, 400);
+  }
+
+  // Diagnostic mode: admin only.
+  // Does not modify D1.
+  if (url.searchParams.get('diagnose') === '1') {
+    if (
+      !await authorized(
+        request,
+        env.ADMIN_PASSWORD
+      )
+    ) {
+      return respond({
+        ok: false,
+        error: 'Admin login diperlukan'
+      }, 401);
+    }
+
+    try {
+      const source = await fetchSource(date);
+
+      const parsed = parseVerified(
+        source.data,
+        date
+      );
+
+      return respond({
+        ok: true,
+        date,
+        diagnostics: source.diagnostics,
+        stats: parsed.stats,
+        verified: parsed.verified
+      });
+    } catch (error) {
+      return respond({
+        ok: false,
+        date,
+        error: String(
+          error?.message || error
+        ),
+        diagnostics:
+          error?.diagnostics || null
+      }, 502);
+    }
+  }
+
+  if (!env.DB) {
+    return respond({
+      ok: false,
+      error: 'D1 DB offline'
+    }, 503);
+  }
+
+  try {
+    await init(env.DB);
+
+    const query = await env.DB.prepare(`
+      SELECT
+        market,
+        draw_time,
+        number,
+        original_five,
+        session_period
+      FROM hokidraw_live_results
+      WHERE draw_date = ?
+      ORDER BY draw_time
+    `).bind(date).all();
+
+    const results = Object.fromEntries(
+      (query.results || []).map(x => [
+        x.market,
+        {
+          number: x.number,
+          time: x.draw_time,
+          originalFive: x.original_five,
+          sessionPeriod: x.session_period
+        }
+      ])
+    );
+
+    return respond({
+      ok: true,
+      date,
+      results
+    });
+  } catch (error) {
+    console.error(
+      'HOKIDRAW D1 READ ERROR',
+      String(error?.message || error)
+    );
+
+    return respond({
+      ok: false,
+      error: String(
+        error?.message || error
+      )
+    }, 500);
+  }
+}
+
+export async function onRequestPost({
+  request,
+  env
+}) {
+  if (
+    !await authorized(
+      request,
+      env.ADMIN_PASSWORD
+    )
+  ) {
+    return respond({
+      ok: false,
+      error: 'Admin login diperlukan'
+    }, 401);
+  }
+
+  if (!env.DB) {
+    return respond({
+      ok: false,
+      error: 'D1 DB offline'
+    }, 503);
+  }
+
+  const date = jakartaNow().date;
+
+  let parsed;
+  let sourceDiagnostics;
+
+  try {
+    const source = await fetchSource(date);
+
+    sourceDiagnostics = source.diagnostics;
+
+    parsed = parseVerified(
+      source.data,
+      date
+    );
+  } catch (error) {
+    return respond({
+      ok: false,
+      date,
+      error: String(
+        error?.message || error
+      ),
+      diagnostics:
+        error?.diagnostics || null
+    }, 502);
+  }
+
+  try {
+    await init(env.DB);
+
+    let inserted = 0;
+    let unchanged = 0;
+
+    const conflicts = [];
+
+    for (const result of parsed.verified) {
+      const old = await env.DB.prepare(`
+        SELECT number, session_period
+        FROM hokidraw_live_results
+        WHERE draw_date = ?
+          AND market = ?
+      `).bind(
+        date,
+        result.market
+      ).first();
+
+      if (old) {
+        if (
+          old.number !== result.number ||
+          old.session_period !==
+            result.sessionPeriod
+        ) {
+          conflicts.push(result.market);
+        } else {
+          unchanged++;
+        }
+
+        continue;
+      }
+
+      const saved = await env.DB.prepare(`
+        INSERT OR IGNORE INTO hokidraw_live_results (
+          draw_date,
+          market,
+          draw_time,
+          number,
+          original_five,
+          session_period,
+          created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).bind(
+        date,
+        result.market,
+        result.time,
+        result.number,
+        result.originalFive,
+        result.sessionPeriod,
+        new Date().toISOString()
+      ).run();
+
+      if (saved.meta?.changes) {
+        inserted++;
+      }
+    }
+
+    return respond({
+      ok: true,
+      date,
+      verified: parsed.verified.length,
+      inserted,
+      unchanged,
+      conflicts,
+      stats: parsed.stats,
+      sourceStatus:
+        sourceDiagnostics.httpStatus
+    });
+  } catch (error) {
+    console.error(
+      'HOKIDRAW D1 SAVE ERROR',
+      String(error?.message || error)
+    );
+
+    return respond({
+      ok: false,
+      date,
+      error: String(
+        error?.message || error
+      )
+    }, 500);
+  }
 }
