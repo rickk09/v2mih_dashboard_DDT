@@ -1,5 +1,4 @@
-
-// V46.3 - HOKIDRAW LIVE RESULT
+// V46.4 - HOKIDRAW LIVE RESULT
 // Cloudflare Pages Functions + D1
 // Verified 5D first prize -> last 4 digits
 // Includes upstream diagnostics and safe D1 persistence.
@@ -166,6 +165,7 @@ async function fetchSource(date) {
           'application/json, text/javascript, */*; q=0.01',
         'content-type':
           'application/x-www-form-urlencoded',
+        'x-requested-with': 'XMLHttpRequest',
         origin: 'https://www.hokidraw.com',
         referer:
           'https://www.hokidraw.com/live-draw.html'
